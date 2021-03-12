@@ -1,0 +1,53 @@
+xkb_keymap {
+	xkb_keycodes  { 
+		include "evdev+aliases(qwertz)"
+
+		<KX0> = 191;
+		<KX1> = 192;
+		<KX2> = 193;
+		<KX3> = 194;
+		<KX4> = 195;
+		<KX5> = 196;
+		<KX6> = 197;
+		<KX7> = 198;
+		<KX8> = 199;
+		<KX9> = 200;
+		<KXDV> = 201;
+		<KXMU> = 202;
+
+	};
+	xkb_types     { include "complete"	};
+	xkb_compat    { 
+		include "complete"
+		interpret Overlay1_Enable { action = LockControls(controls=overlay1); };
+
+		indicator "Scroll Lock" {
+			allowExplicit;
+			whichModState= Locked;
+			controls = overlay1;
+    	};
+
+	};
+	xkb_symbols   { 
+		include "pc+ro+inet(evdev)"
+
+		#key <KP1> { [KP_End], overlay1=<KX1> };
+		key <KP0> { overlay1=<KX0> };		key <KX0> { [F13] };
+		key <KP1> { overlay1=<KX1> };		key <KX1> { [F14] };
+		key <KP2> { overlay1=<KX2> };		key <KX2> { [F15] };
+		key <KP3> { overlay1=<KX3> };		key <KX3> { [F16] };
+		key <KP4> { overlay1=<KX4> };		key <KX4> { [F17] };
+		key <KP5> { overlay1=<KX5> };		key <KX5> { [F18] };
+		key <KP6> { overlay1=<KX6> };		key <KX6> { [F19] };
+		key <KP7> { overlay1=<KX7> };		key <KX7> { [F20] };
+		key <KP8> { overlay1=<KX8> };		key <KX8> { [F21] };
+		key <KP9> { overlay1=<KX9> };		key <KX9> { [F22] };
+		key <KPDV> { overlay1=<KXDV> };		key <KXDV> { [F23] };
+		key <KPMU> { overlay1=<KXMU> };		key <KXMU> { [F24] };
+
+
+		key <SCLK> { [ Overlay1_Enable ] };
+#		key <NMLK> { [ Overlay1_Enable ] };
+	};
+	xkb_geometry  { include "pc(pc105)"	};
+};
