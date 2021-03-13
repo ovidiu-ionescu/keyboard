@@ -2,6 +2,7 @@ xkb_keymap {
 	xkb_keycodes  { 
 		include "evdev+aliases(qwertz)"
 
+// define keys for codes this keyboard does not have, only the 3270 with 122 keys
 		<KX0> = 191;
 		<KX1> = 192;
 		<KX2> = 193;
@@ -14,6 +15,8 @@ xkb_keymap {
 		<KX9> = 200;
 		<KXDV> = 201;
 		<KXMU> = 202;
+		<KXRW> = 206;
+		//alias <MENU> = <SUPR>;
 
 	};
 	xkb_types     { include "complete"	};
@@ -31,6 +34,7 @@ xkb_keymap {
 	xkb_symbols   { 
 		include "pc+ro+inet(evdev)"
 
+// key KP0 in overlay1 becomes KX0. Then KX0 translates to symbol F13
 		#key <KP1> { [KP_End], overlay1=<KX1> };
 		key <KP0> { overlay1=<KX0> };		key <KX0> { [F13] };
 		key <KP1> { overlay1=<KX1> };		key <KX1> { [F14] };
@@ -44,10 +48,15 @@ xkb_keymap {
 		key <KP9> { overlay1=<KX9> };		key <KX9> { [F22] };
 		key <KPDV> { overlay1=<KXDV> };		key <KXDV> { [F23] };
 		key <KPMU> { overlay1=<KXMU> };		key <KXMU> { [F24] };
+		key <MENU> { overlay1=<KXRW> };         key <KXRW> { [Super_R] };
+		key <PAUS> { overlay1=<CAPS> };
+		key <CAPS> { overlay1=<HYPR> };
+		//modifier_map Mod2 { Hyper_R };
 
-
+		// Scroll Lock enables overlay1
 		key <SCLK> { [ Overlay1_Enable ] };
 #		key <NMLK> { [ Overlay1_Enable ] };
+                #key <MENU> {        [ Super_R                  ]       };
 	};
 	xkb_geometry  { include "pc(pc105)"	};
 };
