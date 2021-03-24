@@ -1,8 +1,10 @@
 xkb_keymap {
 	xkb_keycodes  { 
+		// /usr/share/X11/xkb/keycodes/evdev
 		include "evdev+aliases(qwertz)"
 
 // define keys for codes this keyboard does not have, only the 3270 with 122 keys
+// the existing FK13 - FK24 keycodes are already mapped to sound / etc so we use new names
 		<KX0> = 191;
 		<KX1> = 192;
 		<KX2> = 193;
@@ -15,7 +17,7 @@ xkb_keymap {
 		<KX9> = 200;
 		<KXDV> = 201;
 		<KXMU> = 202;
-		<KXRW> = 206;
+		<KXRW> = 206; // windows right, overrides <SUPR>
 		//alias <MENU> = <SUPR>;
 
 	};
@@ -32,6 +34,7 @@ xkb_keymap {
 
 	};
 	xkb_symbols   { 
+		// /usr/share/X11/xkb/sysmbols/pc
 		include "pc+ro+inet(evdev)"
 
 // key KP0 in overlay1 becomes KX0. Then KX0 translates to symbol F13
