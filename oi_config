@@ -53,7 +53,8 @@ xkb_keymap {
 		key <KPMU> { overlay1=<KXMU> };		key <KXMU> { [F24] };
 		key <MENU> { overlay1=<KXRW> };         key <KXRW> { [Super_R] };
 		key <PAUS> { overlay1=<CAPS> };
-		key <CAPS> { overlay1=<HYPR> };
+		#key <CAPS> { overlay1=<HYPR> };
+		key <CAPS> { overlay1=<ESC> };
 		//modifier_map Mod2 { Hyper_R };
 
 		// Scroll Lock enables overlay1
