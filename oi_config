@@ -19,6 +19,7 @@ xkb_keymap {
 		<KXMU> = 202;
 		<KXRW> = 206; // windows right, overrides <SUPR>
 		//alias <MENU> = <SUPR>;
+		<KSPC> = 65;
 
 	};
 	xkb_types     { include "complete"	};
@@ -55,6 +56,7 @@ xkb_keymap {
 		key <PAUS> { overlay1=<CAPS> };
 		#key <CAPS> { overlay1=<HYPR> };
 		key <CAPS> { overlay1=<ESC> };
+		key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, BackSpace] };
 		//modifier_map Mod2 { Hyper_R };
 
 		// Scroll Lock enables overlay1
