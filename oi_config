@@ -56,7 +56,8 @@ xkb_keymap {
 		key <PAUS> { overlay1=<CAPS> };
 		#key <CAPS> { overlay1=<HYPR> };
 		key <CAPS> { overlay1=<ESC> };
-		key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, BackSpace] };
+		#key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, BackSpace] };
+		key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, space] };
 		//modifier_map Mod2 { Hyper_R };
 
 		// Scroll Lock enables overlay1
