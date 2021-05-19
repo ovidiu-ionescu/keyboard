@@ -21,6 +21,32 @@ xkb_keymap {
 		//alias <MENU> = <SUPR>;
 		<KSPC> = 65;
 
+		<FX1> = 67;
+		<FX2> = 68;
+		<FX3> = 69;
+		<FX4> = 70;
+		<FX5> = 71;
+		<FX6> = 72;
+		<FX7> = 73;
+		<FX8> = 74;
+		<FX9> = 75;
+		<FX10> = 76;
+		<FX11> = 95;
+		<FX12> = 96;
+
+		<FX13> = 191;
+		<FX14> = 192;
+		<FX15> = 193;
+		<FX16> = 194;
+		<FX17> = 195;
+		<FX18> = 196;
+		<FX19> = 197;
+		<FX20> = 198;
+		<FX21> = 199;
+		<FX22> = 200;
+		<FX23> = 201;
+		<FX24> = 202;
+
 	};
 	xkb_types     { include "complete"	};
 	xkb_compat    { 
@@ -31,39 +57,76 @@ xkb_keymap {
 			allowExplicit;
 			whichModState= Locked;
 			controls = overlay1;
-    	};
+    		};
+
+		interpret Overlay2_Enable {
+			action = SetControls(controls=overlay2);
+		};
 
 	};
 	xkb_symbols   { 
 		// /usr/share/X11/xkb/sysmbols/pc
 		include "pc+ro+inet(evdev)"
+	key <MENU> { [Overlay2_Enable], overlay2=<MENU> };
 
 // key KP0 in overlay1 becomes KX0. Then KX0 translates to symbol F13
 		#key <KP1> { [KP_End], overlay1=<KX1> };
-		key <KP0> { overlay1=<KX0> };		key <KX0> { [F13] };
-		key <KP1> { overlay1=<KX1> };		key <KX1> { [F14] };
-		key <KP2> { overlay1=<KX2> };		key <KX2> { [F15] };
-		key <KP3> { overlay1=<KX3> };		key <KX3> { [F16] };
-		key <KP4> { overlay1=<KX4> };		key <KX4> { [F17] };
-		key <KP5> { overlay1=<KX5> };		key <KX5> { [F18] };
-		key <KP6> { overlay1=<KX6> };		key <KX6> { [F19] };
-		key <KP7> { overlay1=<KX7> };		key <KX7> { [F20] };
-		key <KP8> { overlay1=<KX8> };		key <KX8> { [F21] };
-		key <KP9> { overlay1=<KX9> };		key <KX9> { [F22] };
-		key <KPDV> { overlay1=<KXDV> };		key <KXDV> { [F23] };
-		key <KPMU> { overlay1=<KXMU> };		key <KXMU> { [F24] };
-		key <MENU> { overlay1=<KXRW> };         key <KXRW> { [Super_R] };
+		key <KP0> { overlay1=<FX13> };		key <KX0> { [F13] };
+		key <KP1> { overlay1=<FX14> };		key <KX1> { [F14] };
+		key <KP2> { overlay1=<FX15> };		key <KX2> { [F15] };
+		key <KP3> { overlay1=<FX16> };		key <KX3> { [F16] };
+		key <KP4> { overlay1=<FX17> };		key <KX4> { [F17] };
+		key <KP5> { overlay1=<FX18> };		key <KX5> { [F18] };
+		key <KP6> { overlay1=<FX19> };		key <KX6> { [F19] };
+		key <KP7> { overlay1=<FX20> };		key <KX7> { [F20] };
+		key <KP8> { overlay1=<FX21> };		key <KX8> { [F21] };
+		key <KP9> { overlay1=<FX22> };		key <KX9> { [F22] };
+		key <KPDV> { overlay1=<FX23> };		key <KXDV> { [F23] };
+		key <KPMU> { overlay1=<FX24> };		key <KXMU> { [F24] };
+		//key <MENU> { overlay1=<KXRW> };         key <KXRW> { [Super_R] };
+		//key <MENU> { overlay1=<HYPR> };         key <HYPR> { [Hyper_R] };
 		key <PAUS> { overlay1=<CAPS> };
-		#key <CAPS> { overlay1=<HYPR> };
+		//key <CAPS> { overlay1=<HYPR> };
 		key <CAPS> { overlay1=<ESC> };
-		#key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, BackSpace] };
+		//key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, BackSpace] };
 		key <SPCE> { overlay1=<KSPC> };         key <KSPC> { [space, space] };
-		//modifier_map Mod2 { Hyper_R };
+		// modifier_map Mod3 { Hyper_R };
 
 		// Scroll Lock enables overlay1
 		key <SCLK> { [ Overlay1_Enable ] };
-#		key <NMLK> { [ Overlay1_Enable ] };
-                #key <MENU> {        [ Super_R                  ]       };
+//		key <NMLK> { [ Overlay1_Enable ] };
+                //key <MENU> {        [ Super_R                  ]       };
+
+		key <FX1> { overlay1=<FX1>, overlay2=<FX13> }; key <FX13> { [F13] };
+		key <FX2> { overlay2=<FX14> }; key <FX14> { [F14] };
+		key <FX3> { overlay2=<FX15> }; key <FX15> { [F15] };
+		key <FX4> { overlay2=<FX16> }; key <FX16> { [F17] };
+		key <FX5> { overlay2=<FX17> }; key <FX17> { [F17] };
+		key <FX6> { overlay2=<FX18> }; key <FX18> { [F18] };
+		key <FX7> { overlay2=<FX19> }; key <FX19> { [F19] };
+		key <FX8> { overlay2=<FX20> }; key <FX20> { [F20] };
+		key <FX9> { overlay2=<FX21> }; key <FX21> { [F21] };
+		key <FX10> { overlay2=<FX22> }; key <FX22> { [F22] };
+		key <FX11> { overlay2=<FX23> }; key <FX23> { [F23] };
+		key <FX12> { overlay2=<FX24> }; key <FX24> { [F24] };
+
+		key <FX1> { [ F1, F1, F13, F13 ]};
+		key <FX2> { [ F2, F2, F14, F14 ]};
+		key <FX3> { [ F3, F3, F15, F15 ]};
+		key <FX4> { [ F4, F4, F16, F16 ]};
+		key <FX5> { [ F5, F5, F17, F17 ]};
+		key <FX6> { [ F6, F6, F18, F18 ]};
+		key <FX7> { [ F7, F7, F19, F19 ]};
+		key <FX8> { [ F8, F8, F20, F20 ]};
+		key <FX9> { [ F9, F9, F21, F21 ]};
+		key <FX10> { [ F10, F10, F22, F22 ]};
+		key <FX11> { [ F11, F11, F23, F23 ]};
+		key <FX12> { [ F12, F12, F24, F24 ]};
+
+		// Japanese quotes
+		key <AD11> { [ bracketleft,    braceleft,  doublelowquotemark, U300C 	  ] };
+		key <AD12> { [ bracketright,  braceright,  rightdoublequotemark, U300D 	  ] };
+
 	};
 	xkb_geometry  { include "pc(pc105)"	};
 };
