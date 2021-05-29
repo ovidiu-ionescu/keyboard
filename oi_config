@@ -5,18 +5,6 @@ xkb_keymap {
 
 // define keys for codes this keyboard does not have, only the 3270 with 122 keys
 // the existing FK13 - FK24 keycodes are already mapped to sound / etc so we use new names
-		<KX0> = 191;
-		<KX1> = 192;
-		<KX2> = 193;
-		<KX3> = 194;
-		<KX4> = 195;
-		<KX5> = 196;
-		<KX6> = 197;
-		<KX7> = 198;
-		<KX8> = 199;
-		<KX9> = 200;
-		<KXDV> = 201;
-		<KXMU> = 202;
 		<KXRW> = 206; // windows right, overrides <SUPR>
 		//alias <MENU> = <SUPR>;
 		<KSPC> = 65;
