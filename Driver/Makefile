@@ -25,5 +25,10 @@ load:
 unload:
 	rmmod ./$(TARGET_MODULE).ko
 
+install:
+	cp ./$(TARGET_MODULE).ko /usr/local/bin/
+	cp 52-unicomp.rules /etc/udev/rules.d/
+
 endif
+
 

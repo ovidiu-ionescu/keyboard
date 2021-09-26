@@ -12,7 +12,14 @@ is plugged into the usb port. The rule will unbind the keyboard from the
 _usbhid_ driver, will load the module containing the custom driver and will bind
 the keyboard to it.
 
+# Build and install
+```bash
+make
+sudo make install
+```
 
+The second command will copy the module binary to _/usr/local/bin_ and the udev
+rule to _/etc/udev/rules.d_ .
 
 
 
