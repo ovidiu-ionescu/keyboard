@@ -2,6 +2,7 @@
 // See what's going on with 
 // ```sudo journalctl -f -o cat /usr/bin/gnome-shell```
 // Restart the gnome-shell with Alt-F2 r Enter
+// Normally this file is located in ~/.local/share/gnome-shell/extensions/kbd@ionescu.net
 
 const {St, Clutter} = imports.gi;
 const Main = imports.ui.main;
