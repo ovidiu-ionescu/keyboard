@@ -115,6 +115,9 @@ xkb_keymap {
 		key <AD11> { [ bracketleft,    braceleft,  doublelowquotemark, U300C 	  ] };
 		key <AD12> { [ bracketright,  braceright,  rightdoublequotemark, U300D 	  ] };
 
+		// Add backslash to slash
+		key <AB10> { [ slash, question, backslash, bar ]};
+
 	};
 	xkb_geometry  { include "pc(pc105)"	};
 };
