@@ -1,10 +1,17 @@
 #!/bin/bash
 # Make scoll lock an overlay switch
 
+# check if gnome is running
+if [ -z "$(pgrep gdm3)" ]; then
+	exit 0
+fi
+
+_x=${DISPLAY:=:1}; export DISPLAY; unset _x
+
 cd ~/.xkb
 #xkbcomp oi_config :0
 #xkbcomp oi_config :1
-xkbcomp oi_config $DISPLAY 2>/dev/null
+xkbcomp oi_config ${DISPLAY} 2>/dev/null
 
 # set the keyboard shortcuts to start gnome-terminal, alacritty
 # the shortcuts were initially set using the GUI -> Keboard Settings but the system forgets the keys every
