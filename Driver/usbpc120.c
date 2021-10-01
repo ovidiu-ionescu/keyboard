@@ -283,6 +283,8 @@ static int usb_kbd_probe(struct usb_interface *iface,
 
 	interface = iface->cur_altsetting;
 
+    printk(KERN_INFO "usb120 getting probed");
+
 	if (interface->desc.bNumEndpoints != 1)
 		return -ENODEV;
 
@@ -393,8 +395,14 @@ static void usb_kbd_disconnect(struct usb_interface *intf)
 }
 
 static const struct usb_device_id usb_kbd_id_table[] = {
-	{ USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT,
+    { USB_DEVICE(0x17f6, 0x0879) },
+    /*
+	{ USB_DEVICE_AND_INTERFACE_INFO(
+        0x17f6, 0x0879,
+        USB_INTERFACE_CLASS_HID, 
+        USB_INTERFACE_SUBCLASS_BOOT,
 		USB_INTERFACE_PROTOCOL_KEYBOARD) },
+        */
 	{ }						/* Terminating entry */
 };
 

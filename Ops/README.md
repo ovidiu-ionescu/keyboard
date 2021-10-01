@@ -42,7 +42,6 @@ USB Devices:
 ls /sys/bus/usb/devices
 ```
 
-Am găsit cu (vendor și product identifică device-ul)
 Looking for a vendor and product to identify a device:
 ```bash
 find /sys -name product
@@ -50,3 +49,7 @@ find /sys -name product
 
 PC122 also has in its directory 0003:17F6:0879.0009
 
+Monitoring udev events, including the properties:
+```bash
+sudo udevadm monitor -p
+```
