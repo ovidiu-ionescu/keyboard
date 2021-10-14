@@ -88,7 +88,7 @@ xkb_keymap {
 		key <FX1> { overlay1=<FX1>, overlay2=<FX13> }; key <FX13> { [F13] };
 		key <FX2> { overlay2=<FX14> }; key <FX14> { [F14] };
 		key <FX3> { overlay2=<FX15> }; key <FX15> { [F15] };
-		key <FX4> { overlay2=<FX16> }; key <FX16> { [F17] };
+		key <FX4> { overlay2=<FX16> }; key <FX16> { [F16] };
 		key <FX5> { overlay2=<FX17> }; key <FX17> { [F17] };
 		key <FX6> { overlay2=<FX18> }; key <FX18> { [F18] };
 		key <FX7> { overlay2=<FX19> }; key <FX19> { [F19] };
