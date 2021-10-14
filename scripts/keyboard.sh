@@ -32,5 +32,9 @@ gsettings set $P/custom1/ binding 'F15'
 # gsettings get $P/custom1/ binding
 
 # gsettings get $P/custom2/ name
-gsettings set $P/custom2/ binding 'F17'
+gsettings set $P/custom2/ binding 'F16'
 # gsettings get $P/custom2/ binding
+
+# gsettings get $P/custom3/ name
+gsettings set $P/custom3/ binding 'F17'
+# gsettings get $P/custom3/ binding
