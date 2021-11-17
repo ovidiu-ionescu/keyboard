@@ -395,8 +395,9 @@ static void usb_kbd_disconnect(struct usb_interface *intf)
 }
 
 static const struct usb_device_id usb_kbd_id_table[] = {
-    { USB_DEVICE(0x17f6, 0x0879) },
-    /*
+    { USB_DEVICE(0x17f6, 0x0879) }, // old controller, sends u instead of backslash on ANSI modification
+    { USB_DEVICE(0x17f6, 0x0865) }, // new controller, backslash fixed
+    /* 
 	{ USB_DEVICE_AND_INTERFACE_INFO(
         0x17f6, 0x0879,
         USB_INTERFACE_CLASS_HID, 
