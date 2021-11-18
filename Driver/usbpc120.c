@@ -111,13 +111,14 @@ struct usb_kbd {
 	spinlock_t leds_lock;
 	bool led_urb_submitted;
 
+    bool caps_used_as_ctl;
 };
 
 static void usb_kbd_irq(struct urb *urb)
 {
 	struct usb_kbd *kbd = urb->context;
 	int i;
-    char caps_pressed;
+    bool caps_pressed;
 
 	switch (urb->status) {
 	case 0:			/* success */
@@ -151,8 +152,12 @@ static void usb_kbd_irq(struct urb *urb)
                 if(old_code == CAPS) {
                     /* report Control_L released */
                     input_report_key(kbd->dev, usb_kbd_keycode[Control_L], 0);
-                    input_report_key(kbd->dev, usb_kbd_keycode[ESC], 1);
-                    input_report_key(kbd->dev, usb_kbd_keycode[ESC], 0);
+                    if(kbd->caps_used_as_ctl) {
+                        kbd->caps_used_as_ctl = false;
+                    } else {
+                        input_report_key(kbd->dev, usb_kbd_keycode[ESC], 1);
+                        input_report_key(kbd->dev, usb_kbd_keycode[ESC], 0);
+                    }
                 } else {
                     input_report_key(kbd->dev, usb_kbd_keycode[kbd->old[i]], 0);
                 }
@@ -168,6 +173,9 @@ static void usb_kbd_irq(struct urb *urb)
                 if(new_code == CAPS) {
                 } else {
                     input_report_key(kbd->dev, usb_kbd_keycode[kbd->new[i]], 1);
+                    if(caps_pressed) {
+                        kbd->caps_used_as_ctl = true;
+                    }
                 }
 			else
 				hid_info(urb->dev,
