@@ -40,6 +40,10 @@
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>, Ovidiu Ionescu <ovidiu@ionescu.net>"
 #define DRIVER_DESC "USB HID Boot Protocol PC122 keyboard driver"
 
+#define CAPS 0x39
+#define ESC 0x29
+#define Control_L 224
+
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
@@ -113,6 +117,7 @@ static void usb_kbd_irq(struct urb *urb)
 {
 	struct usb_kbd *kbd = urb->context;
 	int i;
+    char caps_pressed;
 
 	switch (urb->status) {
 	case 0:			/* success */
@@ -126,23 +131,44 @@ static void usb_kbd_irq(struct urb *urb)
 		goto resubmit;
 	}
 
+    caps_pressed = memscan(kbd->new + 2, CAPS, 6) != kbd->new + 8;
+    /* report the modifier keys, shift, atl, ctrl */
 	for (i = 0; i < 8; i++)
-		input_report_key(kbd->dev, usb_kbd_keycode[i + 224], (kbd->new[0] >> i) & 1);
+        if(caps_pressed && !i) {
+            /* report Control_L pressed */
+            input_report_key(kbd->dev, usb_kbd_keycode[Control_L], 1);
+        } else {
+            input_report_key(kbd->dev, usb_kbd_keycode[i + 224], (kbd->new[0] >> i) & 1);
+        }
 
 	for (i = 2; i < 8; i++) {
+        unsigned char old_code = kbd->old[i];
+        unsigned char new_code = kbd->new[i];
 
+        /* report keys released */
 		if (kbd->old[i] > 3 && memscan(kbd->new + 2, kbd->old[i], 6) == kbd->new + 8) {
 			if (usb_kbd_keycode[kbd->old[i]])
-				input_report_key(kbd->dev, usb_kbd_keycode[kbd->old[i]], 0);
+                if(old_code == CAPS) {
+                    /* report Control_L released */
+                    input_report_key(kbd->dev, usb_kbd_keycode[Control_L], 0);
+                    input_report_key(kbd->dev, usb_kbd_keycode[ESC], 1);
+                    input_report_key(kbd->dev, usb_kbd_keycode[ESC], 0);
+                } else {
+                    input_report_key(kbd->dev, usb_kbd_keycode[kbd->old[i]], 0);
+                }
 			else
 				hid_info(urb->dev,
 					 "Unknown key (scancode %#x) released.\n",
 					 kbd->old[i]);
 		}
 
+        /* report keys pressed */
 		if (kbd->new[i] > 3 && memscan(kbd->old + 2, kbd->new[i], 6) == kbd->old + 8) {
 			if (usb_kbd_keycode[kbd->new[i]])
-				input_report_key(kbd->dev, usb_kbd_keycode[kbd->new[i]], 1);
+                if(new_code == CAPS) {
+                } else {
+                    input_report_key(kbd->dev, usb_kbd_keycode[kbd->new[i]], 1);
+                }
 			else
 				hid_info(urb->dev,
 					 "Unknown key (scancode %#x) pressed.\n",
