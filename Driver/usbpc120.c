@@ -155,6 +155,11 @@ static void usb_kbd_irq(struct urb *urb)
                     if(kbd->caps_used_as_ctl) {
                         kbd->caps_used_as_ctl = false;
                     } else {
+                        if(kbd->leds && *(kbd->leds) & 2) {
+                            /* send a CAPS to cancel CAPS mode */
+                            input_report_key(kbd->dev, usb_kbd_keycode[CAPS], 1);
+                            input_report_key(kbd->dev, usb_kbd_keycode[CAPS], 0);
+                        }
                         input_report_key(kbd->dev, usb_kbd_keycode[ESC], 1);
                         input_report_key(kbd->dev, usb_kbd_keycode[ESC], 0);
                     }
