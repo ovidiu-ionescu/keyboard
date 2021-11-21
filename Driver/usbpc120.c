@@ -68,8 +68,8 @@ static const unsigned char usb_kbd_keycode[256] = {
 	  0,  0,  0,  0, 30, 48, 46, 32, 18, 33, 34, 35, 23, 36, 37, 38,
 	 50, 49, 24, 25, 16, 19, 31, 20, 22, 47, 17, 45, 21, 44,  2,  3,
 	  4,  5,  6,  7,  8,  9, 10, 11, 28,  1, 14, 15, 57, 12, 13, 26,
-	 27, 43, 43, 39, 40, 41, 51, 52, 53, K_CAPS, 59, 60, 61, 62, 63, 64,
-	 65, 66, 67, 68, 87, 88, 99, 70,K_CAPS,110,102,104,K_END,K_DEL,109,106,
+	 27, 43, 43, 39, 40, 41, 51, 52, 53, 58, 59, 60, 61, 62, 63, 64,
+	 65, 66, 67, 68, 87, 88, 99, 70,119,110,102,104,111,107,109,106,
 	105,108,103, 69, 98, 55, 74, 78, 96, 79, 80, 81, 75, 76, 77, 71,
 	 72, 73, 82, 83, 86,127,116,117,183,184,185,186,187,188,189,190,
 	191,192,193,194,134,138,130,132,128,129,131,137,133,135,136,113,
@@ -128,7 +128,30 @@ struct usb_kbd {
 	bool led_urb_submitted;
 
     bool caps_used_as_ctl;
+    unsigned short idProduct;
 };
+
+static unsigned char translate_keycode(unsigned char keycode, struct usb_kbd *kbd)
+{
+    if(PAUSE ==keycode)
+        printk(KERN_INFO "OI Keyboard product id id: %04x", kbd->idProduct);
+    /* substitutions for the PC122 keyboard */
+    if(0x0865 == kbd->idProduct) {
+        switch(keycode) {
+            case DEL:
+                return K_END;
+            case END:
+                return K_DEL;
+                
+        }
+    }
+    /* substitutions for the all keyboards */
+    switch(keycode) {
+        case PAUSE:
+            return K_CAPS;
+    }    
+    return usb_kbd_keycode[keycode];
+}
 
 static void usb_kbd_irq(struct urb *urb)
 {
@@ -153,9 +176,9 @@ static void usb_kbd_irq(struct urb *urb)
 	for (i = 0; i < 8; i++)
         if(caps_pressed && !i) {
             /* report Control_L pressed */
-            input_report_key(kbd->dev, usb_kbd_keycode[Control_L], 1);
+            input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 1);
         } else {
-            input_report_key(kbd->dev, usb_kbd_keycode[i + 224], (kbd->new[0] >> i) & 1);
+            input_report_key(kbd->dev, translate_keycode(i + 224, kbd), (kbd->new[0] >> i) & 1);
         }
 
 	for (i = 2; i < 8; i++) {
@@ -164,23 +187,23 @@ static void usb_kbd_irq(struct urb *urb)
 
         /* report keys released */
 		if (kbd->old[i] > 3 && memscan(kbd->new + 2, kbd->old[i], 6) == kbd->new + 8) {
-			if (usb_kbd_keycode[kbd->old[i]])
+			if (translate_keycode(kbd->old[i], kbd))
                 if(old_code == CAPS) {
                     /* report Control_L released */
-                    input_report_key(kbd->dev, usb_kbd_keycode[Control_L], 0);
+                    input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 0);
                     if(kbd->caps_used_as_ctl) {
                         kbd->caps_used_as_ctl = false;
                     } else {
                         if(kbd->leds && *(kbd->leds) & 2) {
                             /* send a CAPS to cancel CAPS mode */
-                            input_report_key(kbd->dev, usb_kbd_keycode[CAPS], 1);
-                            input_report_key(kbd->dev, usb_kbd_keycode[CAPS], 0);
+                            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 1);
+                            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
                         }
-                        input_report_key(kbd->dev, usb_kbd_keycode[ESC], 1);
-                        input_report_key(kbd->dev, usb_kbd_keycode[ESC], 0);
+                        input_report_key(kbd->dev, translate_keycode(ESC, kbd), 1);
+                        input_report_key(kbd->dev, translate_keycode(ESC, kbd), 0);
                     }
                 } else {
-                    input_report_key(kbd->dev, usb_kbd_keycode[kbd->old[i]], 0);
+                    input_report_key(kbd->dev, translate_keycode(kbd->old[i], kbd), 0);
                 }
 			else
 				hid_info(urb->dev,
@@ -190,10 +213,10 @@ static void usb_kbd_irq(struct urb *urb)
 
         /* report keys pressed */
 		if (kbd->new[i] > 3 && memscan(kbd->old + 2, kbd->new[i], 6) == kbd->old + 8) {
-			if (usb_kbd_keycode[kbd->new[i]])
+			if (translate_keycode(kbd->new[i], kbd))
                 if(new_code == CAPS) {
                 } else {
-                    input_report_key(kbd->dev, usb_kbd_keycode[kbd->new[i]], 1);
+                    input_report_key(kbd->dev, translate_keycode(kbd->new[i], kbd), 1);
                     if(caps_pressed) {
                         kbd->caps_used_as_ctl = true;
                     }
@@ -376,6 +399,7 @@ static int usb_kbd_probe(struct usb_interface *iface,
 			 "USB HIDBP Keyboard %04x:%04x",
 			 le16_to_cpu(dev->descriptor.idVendor),
 			 le16_to_cpu(dev->descriptor.idProduct));
+    kbd->idProduct = le16_to_cpu(dev->descriptor.idProduct);
 
 	usb_make_path(dev, kbd->phys, sizeof(kbd->phys));
 	strlcat(kbd->phys, "/input0", sizeof(kbd->phys));
@@ -452,6 +476,7 @@ static void usb_kbd_disconnect(struct usb_interface *intf)
 static const struct usb_device_id usb_kbd_id_table[] = {
     { USB_DEVICE(0x17f6, 0x0879) }, // old controller, sends u instead of backslash on ANSI modification
     { USB_DEVICE(0x17f6, 0x0865) }, // new controller, backslash fixed
+    { USB_DEVICE(0x17f6, 0x0822) }, // new controller, backslash fixed
     /* 
 	{ USB_DEVICE_AND_INTERFACE_INFO(
         0x17f6, 0x0879,
