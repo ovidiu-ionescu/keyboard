@@ -172,6 +172,15 @@ static void usb_kbd_irq(struct urb *urb)
 	}
 
     caps_pressed = memscan(kbd->new + 2, CAPS, 6) != kbd->new + 8;
+    /* AltGr translates F1-F12 to F13-F24 */
+    if(kbd->new[0] & 0x40) {
+        for(i = 2; i < 8; i++) {
+            if(0x3a <= kbd->new[i] && kbd->new[i] <= 0x45) {
+                kbd->new[i] += 0x2e; /* transform F1-F12 to F13-F24 */
+                kbd->new[0] &= 0xbf; /* clear AltGr */
+            }
+        }
+    }
     /* report the modifier keys, shift, atl, ctrl */
 	for (i = 0; i < 8; i++)
         if(caps_pressed && !i) {
@@ -477,6 +486,7 @@ static const struct usb_device_id usb_kbd_id_table[] = {
     { USB_DEVICE(0x17f6, 0x0879) }, // old controller, sends u instead of backslash on ANSI modification
     { USB_DEVICE(0x17f6, 0x0865) }, // new controller, backslash fixed
     { USB_DEVICE(0x17f6, 0x0822) }, // new controller, backslash fixed
+    { USB_DEVICE(0x04b4, 0x0510) }, // new controller, backslash fixed
     /* 
 	{ USB_DEVICE_AND_INTERFACE_INFO(
         0x17f6, 0x0879,
