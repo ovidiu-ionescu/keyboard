@@ -13,7 +13,7 @@ is plugged into the usb port. The rule will unbind the keyboard from the
 _usbhid_ driver, will load the module containing the custom driver and will bind
 the keyboard to it.
 
-# Build and install
+### Build and install
 ```bash
 make
 sudo make install
@@ -26,9 +26,18 @@ rule to _/etc/udev/rules.d_ .
 ## Using dkms
 Create a tar file with the source, add it to the kernel and build:
 ```bash
+# make a tar file that dkms can load. You can also use mktar.sh
 $ tar czvf usbpc121.tar.gz dkms_source_tree
+
+# load the source into /usr/src
 $ sudo dkms ldtarball ./usb120.tar.gz
+
+# create usbpc121.ko 
 $ sudo dkms build usbpc121/1.0.0
+
+# install it in the kernel
 $ sudo dkms install usbpc121/1.0.0
+
+# load it. At startup it will autoload
 $ sudo modprobe usbpc121
 ```
