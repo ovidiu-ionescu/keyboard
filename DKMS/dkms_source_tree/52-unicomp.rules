@@ -1,0 +1,7 @@
+ACTION=="add|bind|change", SUBSYSTEM=="usb", KERNEL=="*0" ATTRS{idVendor}=="17f6", ATTRS{idProduct}=="0865", \
+RUN+="/bin/sh -c 'echo `date` Unicomp %k >> /tmp/oi_udev.log' " \
+RUN+="/bin/sh -c 'insmod /usr/local/lib/usb120.ko' " \
+RUN+="/bin/sh -c 'echo %k > /sys/bus/usb/drivers/usbhid/unbind' " \
+RUN+="/bin/sh -c 'echo %k > /sys/bus/usb/drivers/usb120/bind' " \
+RUN+="/bin/sh -c 'sudo -H -u ovidiu /usr/local/bin/keyboard.sh' " \
+

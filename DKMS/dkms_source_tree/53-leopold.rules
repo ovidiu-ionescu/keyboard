@@ -1,0 +1,3 @@
+ACTION=="add|bind|change", SUBSYSTEM=="usb", KERNEL=="*0" ATTRS{idVendor}=="04b4", ATTRS{idProduct}=="0510", \
+RUN+="/bin/sh -c 'echo `date` Leopold %k >> /tmp/oi_udev.log' " \
+

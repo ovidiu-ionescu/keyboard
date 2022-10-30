@@ -27,6 +27,9 @@ unload:
 
 install:
 	cp ./$(TARGET_MODULE).ko /usr/local/lib/
+	# the rule for the regular Unicomp keyboards
+	cp 51-unicomp.rules /etc/udev/rules.d/
+	# the rule for the 122 key Unicomp keyboards
 	cp 52-unicomp.rules /etc/udev/rules.d/
 
 endif
