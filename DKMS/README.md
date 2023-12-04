@@ -41,3 +41,14 @@ $ sudo dkms install usbpc121/1.0.0
 # load it. At startup it will autoload
 $ sudo modprobe usbpc121
 ```
+### Update:
+In the directory `dkms_source_tree` run:
+
+```bash
+$ sudo dkms add -m usbpc121 -v 1.0.0
+Creating symlink /var/lib/dkms/usbpc121/1.0.0/source ->
+                 /usr/src/usbpc121-1.0.0
+$ sudo dkms build -m usbpc121 -v 1.0.0
+$ sudo dkms install -m usbpc121 -v 1.0.0
+```
+
