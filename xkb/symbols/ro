@@ -66,6 +66,8 @@ xkb_symbols "basic" {
     
     // Add backslash to slash
     key <AB10> { [ slash, question, backslash, bar ]};
+    // Japanese double quotes
+    key <AC11> { [ apostrophe, quotedbl, U309B ] };
 
     // F13 - F24
     key <FX13> { [F13] };
