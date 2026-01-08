@@ -6,7 +6,20 @@ Using just:
 just install
 ```
 
-The just recipe copies the files straight to /usr/src/usbpc121-1.0.0\
+The usbhid driver is greedy and it could take over the keyboard even if the vendoId:productId
+are specified in the usbpc121 driver.
+To make usbhid ignore those keyboards run:
+
+```bash
+just hid
+```
+This will copy a file to `/etc/modprobe.d/` instructing it to skip those ids.
+You can check if it worked with:
+```bash
+lsusb -t
+```
+
+The just install recipe copies the files straight to /usr/src/usbpc121-1.0.0\
 There is another way to copy the source: make a tarball and use `dkms ldtarball`
 but that involves more steps.
 

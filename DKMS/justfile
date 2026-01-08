@@ -46,3 +46,6 @@ remove:
   -sudo rm -rf {{src_dir}}
   @echo "Driver removed."
 
+hid:
+  sudo cp usbpc-keyboards.conf /etc/modprobe.d/
+  sudo update-initramfs -u
