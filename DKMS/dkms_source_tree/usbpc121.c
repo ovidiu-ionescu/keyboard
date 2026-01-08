@@ -485,9 +485,11 @@ static void usb_kbd_disconnect(struct usb_interface *intf)
 }
 
 static const struct usb_device_id usb_kbd_id_table[] = { 
-    { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT,
-        USB_INTERFACE_PROTOCOL_KEYBOARD) },
-    { }                     /* Terminating entry */
+    { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT, USB_INTERFACE_PROTOCOL_KEYBOARD) },
+    { USB_DEVICE(0x17f6, 0x0822) }, // unicomp 103
+    { USB_DEVICE(0x17f6, 0x0865) }, // unicomp 122
+    { USB_DEVICE(0x04b4, 0x0510) }, // leopold
+    { } /* Terminating entry */
 };
 
 MODULE_DEVICE_TABLE (usb, usb_kbd_id_table);
