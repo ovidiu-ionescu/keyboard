@@ -1,0 +1,48 @@
+mod_name := "usbpc121"
+version  := "1.0.0"
+src_dir  := "/usr/src/" + mod_name + "-" + version
+
+# Install Debian/Ubuntu dependencies
+deps:
+  @echo "Checking for build dependencies..."
+  sudo apt update && sudo apt install -y dkms build-essential linux-headers-$(uname -r) kmod
+
+# Register, build, and install the driver
+install: deps
+  @echo "Preparing /usr/src directory..."
+  sudo rm -rf {{src_dir}}
+  sudo mkdir -p {{src_dir}}
+  sudo cp usbpc121.c Makefile {{src_dir}}
+  @echo "Generating dkms.conf dynamically..."
+  sudo bash -c 'printf "PACKAGE_NAME=\"{{mod_name}}\"\n\
+  PACKAGE_VERSION=\"{{version}}\"\n\
+  BUILT_MODULE_NAME[0]=\"\$PACKAGE_NAME\"\n\
+  DEST_MODULE_LOCATION[0]=\"/extra\"\n\
+  AUTOINSTALL=\"yes\"\n" > {{src_dir}}/dkms.conf'
+  @echo "Registering with DKMS..."
+  sudo dkms add -m {{mod_name}} -v {{version}}
+  sudo dkms build -m {{mod_name}} -v {{version}}
+  sudo dkms install -m {{mod_name}} -v {{version}}
+  @echo "--- Visual Confirmation ---"
+  @if [ -f /sbin/modinfo ]; then /sbin/modinfo {{mod_name}} | grep -E "filename|version|alias"; \
+   else modinfo {{mod_name}} | grep -E "filename|version|alias"; fi
+
+# Monitor kernel logs for keyboard events
+test:
+  @echo "Monitoring kernel logs. Plug/unplug your keyboard now..."
+  @echo "Press Ctrl+C to stop."
+  sudo dmesg -w | grep -iE "usb|unicomp|{{mod_name}}"
+
+# Shortcut to quickly apply changes made to the C code
+reload:
+  -just remove
+  just install
+
+# Completely remove from DKMS and delete source files
+remove:
+  @echo "Removing from DKMS..."
+  -sudo dkms remove {{mod_name}}/{{version}} --all
+  @echo "Deleting source directory..."
+  -sudo rm -rf {{src_dir}}
+  @echo "Driver removed."
+
