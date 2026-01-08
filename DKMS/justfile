@@ -46,11 +46,17 @@ remove:
   -sudo rm -rf {{src_dir}}
   @echo "Driver removed."
 
+# Tell usbhid to ignore the keyboards uscpc121 handles
 hid-quirks:
-  sudo cp usbpc-keyboards.conf.quirks /etc/modprobe.d/
+  sudo cp usbpc-keyboards.conf.quirks /etc/modprobe.d/usbpc-keyboards.conf
   sudo update-initramfs -u
+
+# Tell the kernel that usbhid relies on usbpc121 and so give it priority
+hid-softdep:
+  sudo cp usbpc-keyboards.conf.softdep /etc/modprobe.d/usbpc-keyboards.conf
+  sudo update-initramfs -u
+
+# Show current usbhid quirks
+quirks:
   cat /sys/module/usbhid/parameters/quirks
 
-hid-softdep:
-  sudo cp usbpc-keyboards.conf.softdep /etc/modprobe.d/
-  sudo update-initramfs -u
