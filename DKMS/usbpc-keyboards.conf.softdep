@@ -1,0 +1,2 @@
+softdep usbhid pre: usbpc121
+

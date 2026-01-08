@@ -11,8 +11,16 @@ are specified in the usbpc121 driver.
 To make usbhid ignore those keyboards run:
 
 ```bash
-just hid
+just hid-quirks
 ```
+
+Alternatively, you can declare the usbhid driver depends on usbpc121:
+
+```bash
+just hid-softdep
+```
+
+
 This will copy a file to `/etc/modprobe.d/` instructing it to skip those ids.
 You can check if it worked with:
 ```bash
