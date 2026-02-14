@@ -370,7 +370,7 @@ static int usb_kbd_probe(struct usb_interface *iface,
 
 	interface = iface->cur_altsetting;
 
-    printk(KERN_INFO "usb120 getting probed");
+    printk(KERN_INFO "usbpc121 getting probed");
 
 	if (interface->desc.bNumEndpoints != 1)
 		return -ENODEV;
@@ -395,6 +395,7 @@ static int usb_kbd_probe(struct usb_interface *iface,
 	kbd->dev = input_dev;
 	spin_lock_init(&kbd->leds_lock);
 
+  /* was strlcpy but in 6.9.7 the function disappeared */
 	if (dev->manufacturer)
 		strncpy(kbd->name, dev->manufacturer, sizeof(kbd->name));
 
@@ -484,15 +485,17 @@ static void usb_kbd_disconnect(struct usb_interface *intf)
 }
 
 static const struct usb_device_id usb_kbd_id_table[] = { 
-    { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT,
-        USB_INTERFACE_PROTOCOL_KEYBOARD) },
-    { }                     /* Terminating entry */
+    { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT, USB_INTERFACE_PROTOCOL_KEYBOARD) },
+    { USB_DEVICE(0x17f6, 0x0822) }, // unicomp 103
+    { USB_DEVICE(0x17f6, 0x0865) }, // unicomp 122
+    { USB_DEVICE(0x04b4, 0x0510) }, // leopold
+    { } /* Terminating entry */
 };
 
 MODULE_DEVICE_TABLE (usb, usb_kbd_id_table);
 
 static struct usb_driver usb_kbd_driver = {
-	.name =		"usb120",
+	.name =		"usbpc121",
 	.probe =	usb_kbd_probe,
 	.disconnect =	usb_kbd_disconnect,
 	.id_table =	usb_kbd_id_table,
