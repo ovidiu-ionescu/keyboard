@@ -46,6 +46,31 @@ lsinitramfs /boot/initrd.img(uname -r) | grep usbpc121
 lsinitramfs /boot/initrd.img(uname -r) | grep usbpc-keyboards.conf
 ```
 
+### Keyboard status
+Each keyboard handled by usbpc121 exposes its current mode flags as a
+read-only bitmap:
+
+```bash
+cat /sys/class/input/inputN/status
+```
+
+The value is a decimal integer; each bit has a meaning:
+
+| Bit | Mask | Meaning          |
+|-----|------|------------------|
+| 0   | 1    | vi mode          |
+| 1   | 2    | diacritics mode  |
+
+Find the right `inputN` by matching the name in
+`/sys/class/input/input*/name`. The file appears on probe and is removed on
+unplug.
+
+Pressing Scroll Lock toggles the diacritics bit and mirrors it on the
+keyboard's Scroll Lock LED. The key is consumed by the driver and is not
+reported to userspace. While diacritics mode is on, the left Alt key is
+reported as AltGr (right Alt), so it behaves the same as the physical right
+Alt key.
+
 ### Adding support for other keyboards
 Some vendoId/productId combinations have been added inside the driver so 
 that it recognizes the keyboard without using udev rules.

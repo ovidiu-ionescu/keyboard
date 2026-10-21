@@ -30,20 +30,26 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/sysfs.h>
 #include <linux/usb/input.h>
 #include <linux/hid.h>
 
 /*
  * Version Information
  */
-#define DRIVER_VERSION ""
+#define DRIVER_VERSION "1.0.1"
 #define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>, Ovidiu Ionescu <ovidiu@ionescu.net>"
 #define DRIVER_DESC "USB HID Boot Protocol PC122 keyboard driver"
 
 #define CAPS 0x39
 #define ESC 0x29
 
+#define SCROLL_LOCK 0x47
 #define PAUSE 0x48
+
+/* HID boot keyboard modifier bits (byte 0 of the report) */
+#define MOD_LALT 0x04
+#define MOD_RALT 0x40
 #define DEL 0x4C
 #define END 0x4D
 
@@ -55,9 +61,17 @@
 #define K_END 107
 #define K_PAUSE 119
 
+/*
+ * Keyboard status bits, exposed as a bitmap by the read-only "status"
+ * attribute of each input device (/sys/class/input/inputN/status).
+ */
+#define USB_KBD_STATUS_VI_MODE			BIT(0)
+#define USB_KBD_STATUS_DIACRITICS_MODE		BIT(1)
+
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
+MODULE_VERSION(DRIVER_VERSION);
 
 /*
  * End and Delete are swapped
@@ -108,6 +122,10 @@ static const unsigned char usb_kbd_keycode[256] = {
  * @led_urb_submitted: indicates whether @led is in progress, i.e. it has been
  *		submitted and its completion handler has not returned yet
  *		without	resubmitting @led
+ * @caps_used_as_ctl: CAPS is currently acting as Control_L
+ * @idProduct:	USB product ID of this keyboard
+ * @status:	bitmap of USB_KBD_STATUS_* flags, reported to userspace through
+ *		the read-only "status" sysfs attribute
  */
 struct usb_kbd {
 	struct input_dev *dev;
@@ -127,14 +145,43 @@ struct usb_kbd {
 	spinlock_t leds_lock;
 	bool led_urb_submitted;
 
-    bool caps_used_as_ctl;
-    unsigned short idProduct;
+  bool caps_used_as_ctl;
+  unsigned short idProduct;
+
+  unsigned int status;
 };
+
+/*
+ * Update the keyboard status bitmap. Must only be called from the interrupt
+ * URB completion handler, which is the sole writer of @kbd->status.
+ */
+static inline void usb_kbd_status_set(struct usb_kbd *kbd, unsigned int mask,
+				      bool on)
+{
+	unsigned int status = READ_ONCE(kbd->status);
+
+	if (on)
+		status |= mask;
+	else
+		status &= ~mask;
+
+	WRITE_ONCE(kbd->status, status);
+}
+
+static ssize_t status_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct usb_kbd *kbd = input_get_drvdata(to_input_dev(dev));
+
+	return sysfs_emit(buf, "%u\n", READ_ONCE(kbd->status));
+}
+static DEVICE_ATTR_RO(status);
 
 static unsigned char translate_keycode(unsigned char keycode, struct usb_kbd *kbd)
 {
-    if(PAUSE ==keycode)
+    if(PAUSE ==keycode) {
         printk(KERN_INFO "OI Keyboard product id id: %04x", kbd->idProduct);
+    }
     /* substitutions for the PC122 keyboard */
     if(0x0865 == kbd->idProduct) {
         switch(keycode) {
@@ -172,12 +219,18 @@ static void usb_kbd_irq(struct urb *urb)
 	}
 
     caps_pressed = memscan(kbd->new + 2, CAPS, 6) != kbd->new + 8;
+    /* in diacritics mode the left Alt key acts as AltGr (right Alt) */
+    if ((READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE) &&
+        (kbd->new[0] & MOD_LALT)) {
+        kbd->new[0] &= ~MOD_LALT;
+        kbd->new[0] |= MOD_RALT;
+    }
     /* AltGr translates F1-F12 to F13-F24 */
-    if(kbd->new[0] & 0x40) {
+    if(kbd->new[0] & MOD_RALT) {
         for(i = 2; i < 8; i++) {
             if(0x3a <= kbd->new[i] && kbd->new[i] <= 0x45) {
                 kbd->new[i] += 0x2e; /* transform F1-F12 to F13-F24 */
-                kbd->new[0] &= 0xbf; /* clear AltGr */
+                kbd->new[0] &= ~MOD_RALT; /* clear AltGr */
             }
         }
     }
@@ -196,44 +249,50 @@ static void usb_kbd_irq(struct urb *urb)
 
         /* report keys released */
 		if (kbd->old[i] > 3 && memscan(kbd->new + 2, kbd->old[i], 6) == kbd->new + 8) {
-			if (translate_keycode(kbd->old[i], kbd))
-                if(old_code == CAPS) {
-                    /* report Control_L released */
-                    input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 0);
-                    if(kbd->caps_used_as_ctl) {
-                        kbd->caps_used_as_ctl = false;
-                    } else {
-                        if(kbd->leds && *(kbd->leds) & 2) {
-                            /* send a CAPS to cancel CAPS mode */
-                            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 1);
-                            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
-                        }
-                        input_report_key(kbd->dev, translate_keycode(ESC, kbd), 1);
-                        input_report_key(kbd->dev, translate_keycode(ESC, kbd), 0);
-                    }
-                } else {
-                    input_report_key(kbd->dev, translate_keycode(kbd->old[i], kbd), 0);
-                }
-			else
+			if (!translate_keycode(kbd->old[i], kbd)) {
 				hid_info(urb->dev,
 					 "Unknown key (scancode %#x) released.\n",
 					 kbd->old[i]);
+			} else if (old_code == CAPS) {
+				/* report Control_L released */
+				input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 0);
+				if(kbd->caps_used_as_ctl) {
+					kbd->caps_used_as_ctl = false;
+				} else {
+					if(kbd->leds && *(kbd->leds) & 2) {
+						/* send a CAPS to cancel CAPS mode */
+						input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 1);
+						input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
+					}
+					input_report_key(kbd->dev, translate_keycode(ESC, kbd), 1);
+					input_report_key(kbd->dev, translate_keycode(ESC, kbd), 0);
+				}
+			} else if (old_code != SCROLL_LOCK) {
+				input_report_key(kbd->dev, translate_keycode(kbd->old[i], kbd), 0);
+			}
 		}
 
         /* report keys pressed */
 		if (kbd->new[i] > 3 && memscan(kbd->old + 2, kbd->new[i], 6) == kbd->old + 8) {
-			if (translate_keycode(kbd->new[i], kbd))
-                if(new_code == CAPS) {
-                } else {
-                    input_report_key(kbd->dev, translate_keycode(kbd->new[i], kbd), 1);
-                    if(caps_pressed) {
-                        kbd->caps_used_as_ctl = true;
-                    }
-                }
-			else
+			if (!translate_keycode(kbd->new[i], kbd)) {
 				hid_info(urb->dev,
 					 "Unknown key (scancode %#x) pressed.\n",
 					 kbd->new[i]);
+			} else if (new_code == CAPS) {
+				/* CAPS is consumed, it only acts as Control_L */
+			} else if (new_code == SCROLL_LOCK) {
+				/* Scroll Lock toggles diacritics mode, LED mirrors it */
+				bool on = !(READ_ONCE(kbd->status) &
+					    USB_KBD_STATUS_DIACRITICS_MODE);
+
+				usb_kbd_status_set(kbd,
+						   USB_KBD_STATUS_DIACRITICS_MODE, on);
+				input_event(kbd->dev, EV_LED, LED_SCROLLL, on);
+			} else {
+				input_report_key(kbd->dev, translate_keycode(kbd->new[i], kbd), 1);
+				if(caps_pressed)
+					kbd->caps_used_as_ctl = true;
+			}
 		}
 	}
 
@@ -459,12 +518,24 @@ static int usb_kbd_probe(struct usb_interface *iface,
 		goto fail2;
 
 	usb_set_intfdata(iface, kbd);
+
+	error = device_create_file(&input_dev->dev, &dev_attr_status);
+	if (error)
+		goto fail3;
+
 	device_set_wakeup_enable(&dev->dev, 1);
 	return 0;
 
-fail2:	
+fail3:
+	usb_set_intfdata(iface, NULL);
+	input_unregister_device(input_dev);
 	usb_kbd_free_mem(dev, kbd);
-fail1:	
+	kfree(kbd);
+	return error;
+
+fail2:
+	usb_kbd_free_mem(dev, kbd);
+fail1:
 	input_free_device(input_dev);
 	kfree(kbd);
 	return error;
@@ -476,6 +547,7 @@ static void usb_kbd_disconnect(struct usb_interface *intf)
 
 	usb_set_intfdata(intf, NULL);
 	if (kbd) {
+		device_remove_file(&kbd->dev->dev, &dev_attr_status);
 		usb_kill_urb(kbd->irq);
 		input_unregister_device(kbd->dev);
 		usb_kill_urb(kbd->led);

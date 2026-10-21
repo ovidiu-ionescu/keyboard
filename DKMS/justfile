@@ -1,5 +1,5 @@
 mod_name := "usbpc121"
-version  := "1.0.0"
+version  := "1.0.1"
 src_dir  := "/usr/src/" + mod_name + "-" + version
 
 # Install Debian/Ubuntu dependencies
@@ -60,3 +60,11 @@ hid-softdep:
 quirks:
   cat /sys/module/usbhid/parameters/quirks
 
+# install the version currently being developed 
+dev:
+  make
+  sudo rmmod {{mod_name}}
+  sudo insmod ./{{mod_name}}.ko
+  grep -H Unicomp /sys/class/input/input*/name
+  cat /sys/module/usbpc121/version
+  echo "cat /sys/class/input/input*/status"
