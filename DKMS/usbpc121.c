@@ -26,19 +26,20 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#include <linux/hid.h>
 #include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/sysfs.h>
 #include <linux/usb/input.h>
-#include <linux/hid.h>
 
 /*
  * Version Information
  */
 #define DRIVER_VERSION "1.0.1"
-#define DRIVER_AUTHOR "Vojtech Pavlik <vojtech@ucw.cz>, Ovidiu Ionescu <ovidiu@ionescu.net>"
+#define DRIVER_AUTHOR                                                          \
+  "Vojtech Pavlik <vojtech@ucw.cz>, Ovidiu Ionescu <ovidiu@ionescu.net>"
 #define DRIVER_DESC "USB HID Boot Protocol PC122 keyboard driver"
 
 #define CAPS 0x39
@@ -65,8 +66,8 @@
  * Keyboard status bits, exposed as a bitmap by the read-only "status"
  * attribute of each input device (/sys/class/input/inputN/status).
  */
-#define USB_KBD_STATUS_VI_MODE			BIT(0)
-#define USB_KBD_STATUS_DIACRITICS_MODE		BIT(1)
+#define USB_KBD_STATUS_VI_MODE BIT(0)
+#define USB_KBD_STATUS_DIACRITICS_MODE BIT(1)
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -77,26 +78,25 @@ MODULE_VERSION(DRIVER_VERSION);
  * End and Delete are swapped
  * CAPS is overrridden by Control_L and ESC
  * PAUSE is overrridden by CAPS
-*/
+ */
 static const unsigned char usb_kbd_keycode[256] = {
-	  0,  0,  0,  0, 30, 48, 46, 32, 18, 33, 34, 35, 23, 36, 37, 38,
-	 50, 49, 24, 25, 16, 19, 31, 20, 22, 47, 17, 45, 21, 44,  2,  3,
-	  4,  5,  6,  7,  8,  9, 10, 11, 28,  1, 14, 15, 57, 12, 13, 26,
-	 27, 43, 43, 39, 40, 41, 51, 52, 53, 58, 59, 60, 61, 62, 63, 64,
-	 65, 66, 67, 68, 87, 88, 99, 70,119,110,102,104,111,107,109,106,
-	105,108,103, 69, 98, 55, 74, 78, 96, 79, 80, 81, 75, 76, 77, 71,
-	 72, 73, 82, 83, 86,127,116,117,183,184,185,186,187,188,189,190,
-	191,192,193,194,134,138,130,132,128,129,131,137,133,135,136,113,
-	115,114,  0,  0,  0,121,  0, 89, 93,124, 92, 94, 95,  0,  0,  0,
-	122,123, 90, 91, 85,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	 29, 42, 56,125, 97, 54,100,126,164,166,165,163,161,115,114,113,
-	150,158,159,128,136,177,178,176,142,152,173,140
-};
-
+    0,   0,   0,   0,   30,  48,  46,  32,  18,  33,  34,  35,  23,  36,  37,
+    38,  50,  49,  24,  25,  16,  19,  31,  20,  22,  47,  17,  45,  21,  44,
+    2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  28,  1,   14,  15,  57,
+    12,  13,  26,  27,  43,  43,  39,  40,  41,  51,  52,  53,  58,  59,  60,
+    61,  62,  63,  64,  65,  66,  67,  68,  87,  88,  99,  70,  119, 110, 102,
+    104, 111, 107, 109, 106, 105, 108, 103, 69,  98,  55,  74,  78,  96,  79,
+    80,  81,  75,  76,  77,  71,  72,  73,  82,  83,  86,  127, 116, 117, 183,
+    184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 134, 138, 130, 132,
+    128, 129, 131, 137, 133, 135, 136, 113, 115, 114, 0,   0,   0,   121, 0,
+    89,  93,  124, 92,  94,  95,  0,   0,   0,   122, 123, 90,  91,  85,  0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   29,
+    42,  56,  125, 97,  54,  100, 126, 164, 166, 165, 163, 161, 115, 114, 113,
+    150, 158, 159, 128, 136, 177, 178, 176, 142, 152, 173, 140};
 
 /**
  * struct usb_kbd - state of each attached keyboard
@@ -109,7 +109,7 @@ static const unsigned char usb_kbd_keycode[256] = {
  *		new key is pressed or a key that was pressed is released.
  * @led:	URB for sending LEDs (e.g. numlock, ...)
  * @newleds:	data that will be sent with the @led URB representing which LEDs
- 		should be on
+                should be on
  * @name:	Name of the keyboard. @dev's name field points to this buffer
  * @phys:	Physical path of the keyboard. @dev's phys field points to this
  *		buffer
@@ -128,22 +128,22 @@ static const unsigned char usb_kbd_keycode[256] = {
  *		the read-only "status" sysfs attribute
  */
 struct usb_kbd {
-	struct input_dev *dev;
-	struct usb_device *usbdev;
-	unsigned char old[8];
-	struct urb *irq, *led;
-	unsigned char newleds;
-	char name[128];
-	char phys[64];
+  struct input_dev *dev;
+  struct usb_device *usbdev;
+  unsigned char old[8];
+  struct urb *irq, *led;
+  unsigned char newleds;
+  char name[128];
+  char phys[64];
 
-	unsigned char *new;
-	struct usb_ctrlrequest *cr;
-	unsigned char *leds;
-	dma_addr_t new_dma;
-	dma_addr_t leds_dma;
-	
-	spinlock_t leds_lock;
-	bool led_urb_submitted;
+  unsigned char *new;
+  struct usb_ctrlrequest *cr;
+  unsigned char *leds;
+  dma_addr_t new_dma;
+  dma_addr_t leds_dma;
+
+  spinlock_t leds_lock;
+  bool led_urb_submitted;
 
   bool caps_used_as_ctl;
   unsigned short idProduct;
@@ -156,421 +156,404 @@ struct usb_kbd {
  * URB completion handler, which is the sole writer of @kbd->status.
  */
 static inline void usb_kbd_status_set(struct usb_kbd *kbd, unsigned int mask,
-				      bool on)
-{
-	unsigned int status = READ_ONCE(kbd->status);
+                                      bool on) {
+  unsigned int status = READ_ONCE(kbd->status);
 
-	if (on)
-		status |= mask;
-	else
-		status &= ~mask;
+  if (on)
+    status |= mask;
+  else
+    status &= ~mask;
 
-	WRITE_ONCE(kbd->status, status);
+  WRITE_ONCE(kbd->status, status);
 }
 
 static ssize_t status_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct usb_kbd *kbd = input_get_drvdata(to_input_dev(dev));
+                           char *buf) {
+  struct usb_kbd *kbd = input_get_drvdata(to_input_dev(dev));
 
-	return sysfs_emit(buf, "%u\n", READ_ONCE(kbd->status));
+  return sysfs_emit(buf, "%u\n", READ_ONCE(kbd->status));
 }
 static DEVICE_ATTR_RO(status);
 
-static unsigned char translate_keycode(unsigned char keycode, struct usb_kbd *kbd)
-{
-    if(PAUSE ==keycode) {
-        printk(KERN_INFO "OI Keyboard product id id: %04x", kbd->idProduct);
+static unsigned char translate_keycode(unsigned char keycode,
+                                       struct usb_kbd *kbd) {
+  if (PAUSE == keycode) {
+    printk(KERN_INFO "OI Keyboard product id id: %04x", kbd->idProduct);
+  }
+  /* substitutions for the PC122 keyboard */
+  if (0x0865 == kbd->idProduct) {
+    switch (keycode) {
+    case DEL:
+      return K_END;
+    case END:
+      return K_DEL;
     }
-    /* substitutions for the PC122 keyboard */
-    if(0x0865 == kbd->idProduct) {
-        switch(keycode) {
-            case DEL:
-                return K_END;
-            case END:
-                return K_DEL;
-                
-        }
-    }
-    /* substitutions for the all keyboards */
-    switch(keycode) {
-        case PAUSE:
-            return K_CAPS;
-    }    
-    return usb_kbd_keycode[keycode];
+  }
+  /* substitutions for the all keyboards */
+  switch (keycode) {
+  case PAUSE:
+    return K_CAPS;
+  }
+  return usb_kbd_keycode[keycode];
 }
 
-static void usb_kbd_irq(struct urb *urb)
-{
-	struct usb_kbd *kbd = urb->context;
-	int i;
-    bool caps_pressed;
+static void usb_kbd_irq(struct urb *urb) {
+  struct usb_kbd *kbd = urb->context;
+  int i;
+  bool caps_pressed;
 
-	switch (urb->status) {
-	case 0:			/* success */
-		break;
-	case -ECONNRESET:	/* unlink */
-	case -ENOENT:
-	case -ESHUTDOWN:
-		return;
-	/* -EPIPE:  should clear the halt */
-	default:		/* error */
-		goto resubmit;
-	}
+  switch (urb->status) {
+  case 0: /* success */
+    break;
+  case -ECONNRESET: /* unlink */
+  case -ENOENT:
+  case -ESHUTDOWN:
+    return;
+  /* -EPIPE:  should clear the halt */
+  default: /* error */
+    goto resubmit;
+  }
 
-    caps_pressed = memscan(kbd->new + 2, CAPS, 6) != kbd->new + 8;
-    /* in diacritics mode the left Alt key acts as AltGr (right Alt) */
-    if ((READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE) &&
-        (kbd->new[0] & MOD_LALT)) {
-        kbd->new[0] &= ~MOD_LALT;
-        kbd->new[0] |= MOD_RALT;
+  caps_pressed = memscan(kbd->new + 2, CAPS, 6) != kbd->new + 8;
+  /* in diacritics mode the left Alt key acts as AltGr (right Alt) */
+  if ((READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE) &&
+      (kbd->new[0] & MOD_LALT)) {
+    kbd->new[0] &= ~MOD_LALT;
+    kbd->new[0] |= MOD_RALT;
+  }
+  /* AltGr translates F1-F12 to F13-F24 */
+  if (kbd->new[0] & MOD_RALT) {
+    for (i = 2; i < 8; i++) {
+      if (0x3a <= kbd->new[i] && kbd->new[i] <= 0x45) {
+        kbd->new[i] += 0x2e;      /* transform F1-F12 to F13-F24 */
+        kbd->new[0] &= ~MOD_RALT; /* clear AltGr */
+      }
     }
-    /* AltGr translates F1-F12 to F13-F24 */
-    if(kbd->new[0] & MOD_RALT) {
-        for(i = 2; i < 8; i++) {
-            if(0x3a <= kbd->new[i] && kbd->new[i] <= 0x45) {
-                kbd->new[i] += 0x2e; /* transform F1-F12 to F13-F24 */
-                kbd->new[0] &= ~MOD_RALT; /* clear AltGr */
-            }
-        }
+  }
+  /* report the modifier keys, shift, atl, ctrl */
+  for (i = 0; i < 8; i++)
+    if (caps_pressed && !i) {
+      /* report Control_L pressed */
+      input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 1);
+    } else {
+      input_report_key(kbd->dev, translate_keycode(i + 224, kbd),
+                       (kbd->new[0] >> i) & 1);
     }
-    /* report the modifier keys, shift, atl, ctrl */
-	for (i = 0; i < 8; i++)
-        if(caps_pressed && !i) {
-            /* report Control_L pressed */
-            input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 1);
+
+  for (i = 2; i < 8; i++) {
+    unsigned char old_code = kbd->old[i];
+    unsigned char new_code = kbd->new[i];
+
+    /* report keys released */
+    if (kbd->old[i] > 3 &&
+        memscan(kbd->new + 2, kbd->old[i], 6) == kbd->new + 8) {
+      if (!translate_keycode(kbd->old[i], kbd)) {
+        hid_info(urb->dev, "Unknown key (scancode %#x) released.\n",
+                 kbd->old[i]);
+      } else if (old_code == CAPS) {
+        /* report Control_L released */
+        input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 0);
+        if (kbd->caps_used_as_ctl) {
+          kbd->caps_used_as_ctl = false;
         } else {
-            input_report_key(kbd->dev, translate_keycode(i + 224, kbd), (kbd->new[0] >> i) & 1);
+          if (kbd->leds && *(kbd->leds) & 2) {
+            /* send a CAPS to cancel CAPS mode */
+            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 1);
+            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
+          }
+          input_report_key(kbd->dev, translate_keycode(ESC, kbd), 1);
+          input_report_key(kbd->dev, translate_keycode(ESC, kbd), 0);
         }
+      } else if (old_code != SCROLL_LOCK) {
+        input_report_key(kbd->dev, translate_keycode(kbd->old[i], kbd), 0);
+      }
+    }
 
-	for (i = 2; i < 8; i++) {
-        unsigned char old_code = kbd->old[i];
-        unsigned char new_code = kbd->new[i];
+    /* report keys pressed */
+    if (kbd->new[i] > 3 &&
+        memscan(kbd->old + 2, kbd->new[i], 6) == kbd->old + 8) {
+      if (!translate_keycode(kbd->new[i], kbd)) {
+        hid_info(urb->dev, "Unknown key (scancode %#x) pressed.\n",
+                 kbd->new[i]);
+      } else if (new_code == CAPS) {
+        /* CAPS is consumed, it only acts as Control_L */
+      } else if (new_code == SCROLL_LOCK) {
+        /* Scroll Lock toggles diacritics mode, LED mirrors it */
+        bool on = !(READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE);
 
-        /* report keys released */
-		if (kbd->old[i] > 3 && memscan(kbd->new + 2, kbd->old[i], 6) == kbd->new + 8) {
-			if (!translate_keycode(kbd->old[i], kbd)) {
-				hid_info(urb->dev,
-					 "Unknown key (scancode %#x) released.\n",
-					 kbd->old[i]);
-			} else if (old_code == CAPS) {
-				/* report Control_L released */
-				input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 0);
-				if(kbd->caps_used_as_ctl) {
-					kbd->caps_used_as_ctl = false;
-				} else {
-					if(kbd->leds && *(kbd->leds) & 2) {
-						/* send a CAPS to cancel CAPS mode */
-						input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 1);
-						input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
-					}
-					input_report_key(kbd->dev, translate_keycode(ESC, kbd), 1);
-					input_report_key(kbd->dev, translate_keycode(ESC, kbd), 0);
-				}
-			} else if (old_code != SCROLL_LOCK) {
-				input_report_key(kbd->dev, translate_keycode(kbd->old[i], kbd), 0);
-			}
-		}
+        usb_kbd_status_set(kbd, USB_KBD_STATUS_DIACRITICS_MODE, on);
+        input_event(kbd->dev, EV_LED, LED_SCROLLL, on);
+      } else {
+        input_report_key(kbd->dev, translate_keycode(kbd->new[i], kbd), 1);
+        if (caps_pressed)
+          kbd->caps_used_as_ctl = true;
+      }
+    }
+  }
 
-        /* report keys pressed */
-		if (kbd->new[i] > 3 && memscan(kbd->old + 2, kbd->new[i], 6) == kbd->old + 8) {
-			if (!translate_keycode(kbd->new[i], kbd)) {
-				hid_info(urb->dev,
-					 "Unknown key (scancode %#x) pressed.\n",
-					 kbd->new[i]);
-			} else if (new_code == CAPS) {
-				/* CAPS is consumed, it only acts as Control_L */
-			} else if (new_code == SCROLL_LOCK) {
-				/* Scroll Lock toggles diacritics mode, LED mirrors it */
-				bool on = !(READ_ONCE(kbd->status) &
-					    USB_KBD_STATUS_DIACRITICS_MODE);
+  input_sync(kbd->dev);
 
-				usb_kbd_status_set(kbd,
-						   USB_KBD_STATUS_DIACRITICS_MODE, on);
-				input_event(kbd->dev, EV_LED, LED_SCROLLL, on);
-			} else {
-				input_report_key(kbd->dev, translate_keycode(kbd->new[i], kbd), 1);
-				if(caps_pressed)
-					kbd->caps_used_as_ctl = true;
-			}
-		}
-	}
-
-	input_sync(kbd->dev);
-
-	memcpy(kbd->old, kbd->new, 8);
+  memcpy(kbd->old, kbd->new, 8);
 
 resubmit:
-	i = usb_submit_urb (urb, GFP_ATOMIC);
-	if (i)
-		hid_err(urb->dev, "can't resubmit intr, %s-%s/input0, status %d",
-			kbd->usbdev->bus->bus_name,
-			kbd->usbdev->devpath, i);
+  i = usb_submit_urb(urb, GFP_ATOMIC);
+  if (i)
+    hid_err(urb->dev, "can't resubmit intr, %s-%s/input0, status %d",
+            kbd->usbdev->bus->bus_name, kbd->usbdev->devpath, i);
 }
 
 static int usb_kbd_event(struct input_dev *dev, unsigned int type,
-			 unsigned int code, int value)
-{
-	unsigned long flags;
-	struct usb_kbd *kbd = input_get_drvdata(dev);
+                         unsigned int code, int value) {
+  unsigned long flags;
+  struct usb_kbd *kbd = input_get_drvdata(dev);
 
-	if (type != EV_LED)
-		return -1;
+  if (type != EV_LED)
+    return -1;
 
-	spin_lock_irqsave(&kbd->leds_lock, flags);
-	kbd->newleds = (!!test_bit(LED_KANA,    dev->led) << 3) | (!!test_bit(LED_COMPOSE, dev->led) << 3) |
-		       (!!test_bit(LED_SCROLLL, dev->led) << 2) | (!!test_bit(LED_CAPSL,   dev->led) << 1) |
-		       (!!test_bit(LED_NUML,    dev->led));
+  spin_lock_irqsave(&kbd->leds_lock, flags);
+  kbd->newleds = (!!test_bit(LED_KANA, dev->led) << 3) |
+                 (!!test_bit(LED_COMPOSE, dev->led) << 3) |
+                 (!!test_bit(LED_SCROLLL, dev->led) << 2) |
+                 (!!test_bit(LED_CAPSL, dev->led) << 1) |
+                 (!!test_bit(LED_NUML, dev->led));
 
-	if (kbd->led_urb_submitted){
-		spin_unlock_irqrestore(&kbd->leds_lock, flags);
-		return 0;
-	}
+  if (kbd->led_urb_submitted) {
+    spin_unlock_irqrestore(&kbd->leds_lock, flags);
+    return 0;
+  }
 
-	if (*(kbd->leds) == kbd->newleds){
-		spin_unlock_irqrestore(&kbd->leds_lock, flags);
-		return 0;
-	}
+  if (*(kbd->leds) == kbd->newleds) {
+    spin_unlock_irqrestore(&kbd->leds_lock, flags);
+    return 0;
+  }
 
-	*(kbd->leds) = kbd->newleds;
-	
-	kbd->led->dev = kbd->usbdev;
-	if (usb_submit_urb(kbd->led, GFP_ATOMIC))
-		pr_err("usb_submit_urb(leds) failed\n");
-	else
-		kbd->led_urb_submitted = true;
-	
-	spin_unlock_irqrestore(&kbd->leds_lock, flags);
-	
-	return 0;
+  *(kbd->leds) = kbd->newleds;
+
+  kbd->led->dev = kbd->usbdev;
+  if (usb_submit_urb(kbd->led, GFP_ATOMIC))
+    pr_err("usb_submit_urb(leds) failed\n");
+  else
+    kbd->led_urb_submitted = true;
+
+  spin_unlock_irqrestore(&kbd->leds_lock, flags);
+
+  return 0;
 }
 
-static void usb_kbd_led(struct urb *urb)
-{
-	unsigned long flags;
-	struct usb_kbd *kbd = urb->context;
+static void usb_kbd_led(struct urb *urb) {
+  unsigned long flags;
+  struct usb_kbd *kbd = urb->context;
 
-	if (urb->status)
-		hid_warn(urb->dev, "led urb status %d received\n",
-			 urb->status);
+  if (urb->status)
+    hid_warn(urb->dev, "led urb status %d received\n", urb->status);
 
-	spin_lock_irqsave(&kbd->leds_lock, flags);
+  spin_lock_irqsave(&kbd->leds_lock, flags);
 
-	if (*(kbd->leds) == kbd->newleds){
-		kbd->led_urb_submitted = false;
-		spin_unlock_irqrestore(&kbd->leds_lock, flags);
-		return;
-	}
+  if (*(kbd->leds) == kbd->newleds) {
+    kbd->led_urb_submitted = false;
+    spin_unlock_irqrestore(&kbd->leds_lock, flags);
+    return;
+  }
 
-	*(kbd->leds) = kbd->newleds;
-	
-	kbd->led->dev = kbd->usbdev;
-	if (usb_submit_urb(kbd->led, GFP_ATOMIC)){
-		hid_err(urb->dev, "usb_submit_urb(leds) failed\n");
-		kbd->led_urb_submitted = false;
-	}
-	spin_unlock_irqrestore(&kbd->leds_lock, flags);
-	
+  *(kbd->leds) = kbd->newleds;
+
+  kbd->led->dev = kbd->usbdev;
+  if (usb_submit_urb(kbd->led, GFP_ATOMIC)) {
+    hid_err(urb->dev, "usb_submit_urb(leds) failed\n");
+    kbd->led_urb_submitted = false;
+  }
+  spin_unlock_irqrestore(&kbd->leds_lock, flags);
 }
 
-static int usb_kbd_open(struct input_dev *dev)
-{
-	struct usb_kbd *kbd = input_get_drvdata(dev);
+static int usb_kbd_open(struct input_dev *dev) {
+  struct usb_kbd *kbd = input_get_drvdata(dev);
 
-	kbd->irq->dev = kbd->usbdev;
-	if (usb_submit_urb(kbd->irq, GFP_KERNEL))
-		return -EIO;
+  kbd->irq->dev = kbd->usbdev;
+  if (usb_submit_urb(kbd->irq, GFP_KERNEL))
+    return -EIO;
 
-	return 0;
+  return 0;
 }
 
-static void usb_kbd_close(struct input_dev *dev)
-{
-	struct usb_kbd *kbd = input_get_drvdata(dev);
+static void usb_kbd_close(struct input_dev *dev) {
+  struct usb_kbd *kbd = input_get_drvdata(dev);
 
-	usb_kill_urb(kbd->irq);
+  usb_kill_urb(kbd->irq);
 }
 
-static int usb_kbd_alloc_mem(struct usb_device *dev, struct usb_kbd *kbd)
-{
-	if (!(kbd->irq = usb_alloc_urb(0, GFP_KERNEL)))
-		return -1;
-	if (!(kbd->led = usb_alloc_urb(0, GFP_KERNEL)))
-		return -1;
-	if (!(kbd->new = usb_alloc_coherent(dev, 8, GFP_ATOMIC, &kbd->new_dma)))
-		return -1;
-	if (!(kbd->cr = kmalloc(sizeof(struct usb_ctrlrequest), GFP_KERNEL)))
-		return -1;
-	if (!(kbd->leds = usb_alloc_coherent(dev, 1, GFP_ATOMIC, &kbd->leds_dma)))
-		return -1;
+static int usb_kbd_alloc_mem(struct usb_device *dev, struct usb_kbd *kbd) {
+  if (!(kbd->irq = usb_alloc_urb(0, GFP_KERNEL)))
+    return -1;
+  if (!(kbd->led = usb_alloc_urb(0, GFP_KERNEL)))
+    return -1;
+  if (!(kbd->new = usb_alloc_coherent(dev, 8, GFP_ATOMIC, &kbd->new_dma)))
+    return -1;
+  if (!(kbd->cr = kmalloc(sizeof(struct usb_ctrlrequest), GFP_KERNEL)))
+    return -1;
+  if (!(kbd->leds = usb_alloc_coherent(dev, 1, GFP_ATOMIC, &kbd->leds_dma)))
+    return -1;
 
-	return 0;
+  return 0;
 }
 
-static void usb_kbd_free_mem(struct usb_device *dev, struct usb_kbd *kbd)
-{
-	usb_free_urb(kbd->irq);
-	usb_free_urb(kbd->led);
-	usb_free_coherent(dev, 8, kbd->new, kbd->new_dma);
-	kfree(kbd->cr);
-	usb_free_coherent(dev, 1, kbd->leds, kbd->leds_dma);
+static void usb_kbd_free_mem(struct usb_device *dev, struct usb_kbd *kbd) {
+  usb_free_urb(kbd->irq);
+  usb_free_urb(kbd->led);
+  usb_free_coherent(dev, 8, kbd->new, kbd->new_dma);
+  kfree(kbd->cr);
+  usb_free_coherent(dev, 1, kbd->leds, kbd->leds_dma);
 }
 
 static int usb_kbd_probe(struct usb_interface *iface,
-			 const struct usb_device_id *id)
-{
-	struct usb_device *dev = interface_to_usbdev(iface);
-	struct usb_host_interface *interface;
-	struct usb_endpoint_descriptor *endpoint;
-	struct usb_kbd *kbd;
-	struct input_dev *input_dev;
-	int i, pipe, maxp;
-	int error = -ENOMEM;
+                         const struct usb_device_id *id) {
+  struct usb_device *dev = interface_to_usbdev(iface);
+  struct usb_host_interface *interface;
+  struct usb_endpoint_descriptor *endpoint;
+  struct usb_kbd *kbd;
+  struct input_dev *input_dev;
+  int i, pipe, maxp;
+  int error = -ENOMEM;
 
-	interface = iface->cur_altsetting;
+  interface = iface->cur_altsetting;
 
-    printk(KERN_INFO "usbpc121 getting probed");
+  printk(KERN_INFO "usbpc121 getting probed");
 
-	if (interface->desc.bNumEndpoints != 1)
-		return -ENODEV;
+  if (interface->desc.bNumEndpoints != 1)
+    return -ENODEV;
 
-	endpoint = &interface->endpoint[0].desc;
-	if (!usb_endpoint_is_int_in(endpoint))
-		return -ENODEV;
+  endpoint = &interface->endpoint[0].desc;
+  if (!usb_endpoint_is_int_in(endpoint))
+    return -ENODEV;
 
-	pipe = usb_rcvintpipe(dev, endpoint->bEndpointAddress);
-	//maxp = usb_maxpacket(dev, pipe, usb_pipeout(pipe));
-	maxp = usb_maxpacket(dev, pipe);
+  pipe = usb_rcvintpipe(dev, endpoint->bEndpointAddress);
+  // maxp = usb_maxpacket(dev, pipe, usb_pipeout(pipe));
+  maxp = usb_maxpacket(dev, pipe);
 
-	kbd = kzalloc(sizeof(struct usb_kbd), GFP_KERNEL);
-	input_dev = input_allocate_device();
-	if (!kbd || !input_dev)
-		goto fail1;
+  kbd = kzalloc(sizeof(struct usb_kbd), GFP_KERNEL);
+  input_dev = input_allocate_device();
+  if (!kbd || !input_dev)
+    goto fail1;
 
-	if (usb_kbd_alloc_mem(dev, kbd))
-		goto fail2;
+  if (usb_kbd_alloc_mem(dev, kbd))
+    goto fail2;
 
-	kbd->usbdev = dev;
-	kbd->dev = input_dev;
-	spin_lock_init(&kbd->leds_lock);
+  kbd->usbdev = dev;
+  kbd->dev = input_dev;
+  spin_lock_init(&kbd->leds_lock);
 
   /* was strlcpy but in 6.9.7 the function disappeared */
-	if (dev->manufacturer)
-		strncpy(kbd->name, dev->manufacturer, sizeof(kbd->name));
+  if (dev->manufacturer)
+    strncpy(kbd->name, dev->manufacturer, sizeof(kbd->name));
 
-	if (dev->product) {
-		if (dev->manufacturer)
-			strlcat(kbd->name, " ", sizeof(kbd->name));
-		strlcat(kbd->name, dev->product, sizeof(kbd->name));
-	}
+  if (dev->product) {
+    if (dev->manufacturer)
+      strlcat(kbd->name, " ", sizeof(kbd->name));
+    strlcat(kbd->name, dev->product, sizeof(kbd->name));
+  }
 
-	if (!strlen(kbd->name))
-		snprintf(kbd->name, sizeof(kbd->name),
-			 "USB HIDBP Keyboard %04x:%04x",
-			 le16_to_cpu(dev->descriptor.idVendor),
-			 le16_to_cpu(dev->descriptor.idProduct));
-    kbd->idProduct = le16_to_cpu(dev->descriptor.idProduct);
+  if (!strlen(kbd->name))
+    snprintf(kbd->name, sizeof(kbd->name), "USB HIDBP Keyboard %04x:%04x",
+             le16_to_cpu(dev->descriptor.idVendor),
+             le16_to_cpu(dev->descriptor.idProduct));
+  kbd->idProduct = le16_to_cpu(dev->descriptor.idProduct);
 
-	usb_make_path(dev, kbd->phys, sizeof(kbd->phys));
-	strlcat(kbd->phys, "/input0", sizeof(kbd->phys));
+  usb_make_path(dev, kbd->phys, sizeof(kbd->phys));
+  strlcat(kbd->phys, "/input0", sizeof(kbd->phys));
 
-	input_dev->name = kbd->name;
-	input_dev->phys = kbd->phys;
-	usb_to_input_id(dev, &input_dev->id);
-	input_dev->dev.parent = &iface->dev;
+  input_dev->name = kbd->name;
+  input_dev->phys = kbd->phys;
+  usb_to_input_id(dev, &input_dev->id);
+  input_dev->dev.parent = &iface->dev;
 
-	input_set_drvdata(input_dev, kbd);
+  input_set_drvdata(input_dev, kbd);
 
-	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_LED) |
-		BIT_MASK(EV_REP);
-	input_dev->ledbit[0] = BIT_MASK(LED_NUML) | BIT_MASK(LED_CAPSL) |
-		BIT_MASK(LED_SCROLLL) | BIT_MASK(LED_COMPOSE) |
-		BIT_MASK(LED_KANA);
+  input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_LED) | BIT_MASK(EV_REP);
+  input_dev->ledbit[0] = BIT_MASK(LED_NUML) | BIT_MASK(LED_CAPSL) |
+                         BIT_MASK(LED_SCROLLL) | BIT_MASK(LED_COMPOSE) |
+                         BIT_MASK(LED_KANA);
 
-	for (i = 0; i < 255; i++)
-		set_bit(usb_kbd_keycode[i], input_dev->keybit);
-	clear_bit(0, input_dev->keybit);
+  for (i = 0; i < 255; i++)
+    set_bit(usb_kbd_keycode[i], input_dev->keybit);
+  clear_bit(0, input_dev->keybit);
 
-	input_dev->event = usb_kbd_event;
-	input_dev->open = usb_kbd_open;
-	input_dev->close = usb_kbd_close;
+  input_dev->event = usb_kbd_event;
+  input_dev->open = usb_kbd_open;
+  input_dev->close = usb_kbd_close;
 
-	usb_fill_int_urb(kbd->irq, dev, pipe,
-			 kbd->new, (maxp > 8 ? 8 : maxp),
-			 usb_kbd_irq, kbd, endpoint->bInterval);
-	kbd->irq->transfer_dma = kbd->new_dma;
-	kbd->irq->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
+  usb_fill_int_urb(kbd->irq, dev, pipe, kbd->new, (maxp > 8 ? 8 : maxp),
+                   usb_kbd_irq, kbd, endpoint->bInterval);
+  kbd->irq->transfer_dma = kbd->new_dma;
+  kbd->irq->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	kbd->cr->bRequestType = USB_TYPE_CLASS | USB_RECIP_INTERFACE;
-	kbd->cr->bRequest = 0x09;
-	kbd->cr->wValue = cpu_to_le16(0x200);
-	kbd->cr->wIndex = cpu_to_le16(interface->desc.bInterfaceNumber);
-	kbd->cr->wLength = cpu_to_le16(1);
+  kbd->cr->bRequestType = USB_TYPE_CLASS | USB_RECIP_INTERFACE;
+  kbd->cr->bRequest = 0x09;
+  kbd->cr->wValue = cpu_to_le16(0x200);
+  kbd->cr->wIndex = cpu_to_le16(interface->desc.bInterfaceNumber);
+  kbd->cr->wLength = cpu_to_le16(1);
 
-	usb_fill_control_urb(kbd->led, dev, usb_sndctrlpipe(dev, 0),
-			     (void *) kbd->cr, kbd->leds, 1,
-			     usb_kbd_led, kbd);
-	kbd->led->transfer_dma = kbd->leds_dma;
-	kbd->led->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
+  usb_fill_control_urb(kbd->led, dev, usb_sndctrlpipe(dev, 0), (void *)kbd->cr,
+                       kbd->leds, 1, usb_kbd_led, kbd);
+  kbd->led->transfer_dma = kbd->leds_dma;
+  kbd->led->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	error = input_register_device(kbd->dev);
-	if (error)
-		goto fail2;
+  error = input_register_device(kbd->dev);
+  if (error)
+    goto fail2;
 
-	usb_set_intfdata(iface, kbd);
+  usb_set_intfdata(iface, kbd);
 
-	error = device_create_file(&input_dev->dev, &dev_attr_status);
-	if (error)
-		goto fail3;
+  error = device_create_file(&input_dev->dev, &dev_attr_status);
+  if (error)
+    goto fail3;
 
-	device_set_wakeup_enable(&dev->dev, 1);
-	return 0;
+  device_set_wakeup_enable(&dev->dev, 1);
+  return 0;
 
 fail3:
-	usb_set_intfdata(iface, NULL);
-	input_unregister_device(input_dev);
-	usb_kbd_free_mem(dev, kbd);
-	kfree(kbd);
-	return error;
+  usb_set_intfdata(iface, NULL);
+  input_unregister_device(input_dev);
+  usb_kbd_free_mem(dev, kbd);
+  kfree(kbd);
+  return error;
 
 fail2:
-	usb_kbd_free_mem(dev, kbd);
+  usb_kbd_free_mem(dev, kbd);
 fail1:
-	input_free_device(input_dev);
-	kfree(kbd);
-	return error;
+  input_free_device(input_dev);
+  kfree(kbd);
+  return error;
 }
 
-static void usb_kbd_disconnect(struct usb_interface *intf)
-{
-	struct usb_kbd *kbd = usb_get_intfdata (intf);
+static void usb_kbd_disconnect(struct usb_interface *intf) {
+  struct usb_kbd *kbd = usb_get_intfdata(intf);
 
-	usb_set_intfdata(intf, NULL);
-	if (kbd) {
-		device_remove_file(&kbd->dev->dev, &dev_attr_status);
-		usb_kill_urb(kbd->irq);
-		input_unregister_device(kbd->dev);
-		usb_kill_urb(kbd->led);
-		usb_kbd_free_mem(interface_to_usbdev(intf), kbd);
-		kfree(kbd);
-	}
+  usb_set_intfdata(intf, NULL);
+  if (kbd) {
+    device_remove_file(&kbd->dev->dev, &dev_attr_status);
+    usb_kill_urb(kbd->irq);
+    input_unregister_device(kbd->dev);
+    usb_kill_urb(kbd->led);
+    usb_kbd_free_mem(interface_to_usbdev(intf), kbd);
+    kfree(kbd);
+  }
 }
 
-static const struct usb_device_id usb_kbd_id_table[] = { 
-    { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT, USB_INTERFACE_PROTOCOL_KEYBOARD) },
-    { USB_DEVICE(0x17f6, 0x0822) }, // unicomp 103
-    { USB_DEVICE(0x17f6, 0x0865) }, // unicomp 122
-    { USB_DEVICE(0x04b4, 0x0510) }, // leopold
-    { } /* Terminating entry */
+static const struct usb_device_id usb_kbd_id_table[] = {
+    {USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT,
+                        USB_INTERFACE_PROTOCOL_KEYBOARD)},
+    {USB_DEVICE(0x17f6, 0x0822)}, // unicomp 103
+    {USB_DEVICE(0x17f6, 0x0865)}, // unicomp 122
+    {USB_DEVICE(0x04b4, 0x0510)}, // leopold
+    {}                            /* Terminating entry */
 };
 
-MODULE_DEVICE_TABLE (usb, usb_kbd_id_table);
+MODULE_DEVICE_TABLE(usb, usb_kbd_id_table);
 
 static struct usb_driver usb_kbd_driver = {
-	.name =		"usbpc121",
-	.probe =	usb_kbd_probe,
-	.disconnect =	usb_kbd_disconnect,
-	.id_table =	usb_kbd_id_table,
+    .name = "usbpc121",
+    .probe = usb_kbd_probe,
+    .disconnect = usb_kbd_disconnect,
+    .id_table = usb_kbd_id_table,
 };
 
 module_usb_driver(usb_kbd_driver);
