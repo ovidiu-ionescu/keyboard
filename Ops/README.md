@@ -53,3 +53,8 @@ Monitoring udev events, including the properties:
 ```bash
 sudo udevadm monitor -p
 ```
+
+This way you find out what driver is being used for a USB device:
+```bash
+ls -l /sys/bus/usb/devices/3-2.4:1.0/driver
+```

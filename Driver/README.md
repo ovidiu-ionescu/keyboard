@@ -21,5 +21,3 @@ sudo make install
 The second command will copy the module binary to _/usr/local/bin_ and the udev
 rule to _/etc/udev/rules.d_ .
 
-
-
