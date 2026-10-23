@@ -56,15 +56,24 @@ hid-softdep:
   sudo cp usbpc-keyboards.conf.softdep /etc/modprobe.d/usbpc-keyboards.conf
   sudo update-initramfs -u
 
+# Install usbpc121 module options (vi mode, ...) from ./usbpc121.conf
+config:
+  sudo cp usbpc121.conf /etc/modprobe.d/usbpc121.conf
+  sudo update-initramfs -u
+
 # Show current usbhid quirks
 quirks:
   cat /sys/module/usbhid/parameters/quirks
 
-# install the version currently being developed 
-dev:
+# install the version currently being developed: just dev [module options]
+dev *args:
   make
   sudo rmmod {{mod_name}}
-  sudo insmod ./{{mod_name}}.ko
+  sudo insmod ./{{mod_name}}.ko {{args}}
   grep -H Unicomp /sys/class/input/input*/name
   cat /sys/module/usbpc121/version
   echo "cat /sys/class/input/input*/status"
+
+# show the status file
+status:
+  grep -H Unicomp /sys/class/input/input*/name | cut -d: -f1 | sed 's/name$/status/' | xargs cat

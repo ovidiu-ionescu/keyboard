@@ -75,6 +75,18 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION(DRIVER_VERSION);
 
 /*
+ * Initial vi mode for every keyboard, set when the module is loaded.
+ * modprobe reads it from /etc/modprobe.d/ (for example usbpc121.conf):
+ *
+ *     options usbpc121 vi_mode=1
+ *
+ * With no such option the default is 0 (disabled).
+ */
+static bool vi_mode;
+module_param(vi_mode, bool, 0444);
+MODULE_PARM_DESC(vi_mode, "Start keyboards in vi mode (default: 0)");
+
+/*
  * End and Delete are swapped
  * CAPS is overrridden by Control_L and ESC
  * PAUSE is overrridden by CAPS
@@ -251,8 +263,6 @@ static void usb_kbd_irq(struct urb *urb) {
         hid_info(urb->dev, "Unknown key (scancode %#x) released.\n",
                  kbd->old[i]);
       } else if (old_code == CAPS) {
-        /* report Control_L released */
-        input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 0);
         if (kbd->caps_used_as_ctl) {
           kbd->caps_used_as_ctl = false;
         } else {
@@ -440,6 +450,9 @@ static int usb_kbd_probe(struct usb_interface *iface,
   kbd->usbdev = dev;
   kbd->dev = input_dev;
   spin_lock_init(&kbd->leds_lock);
+
+  /* seed the initial mode before the input device is registered */
+  kbd->status = vi_mode ? USB_KBD_STATUS_VI_MODE : 0;
 
   /* was strlcpy but in 6.9.7 the function disappeared */
   if (dev->manufacturer)
