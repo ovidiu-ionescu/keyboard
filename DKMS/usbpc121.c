@@ -201,11 +201,10 @@ static unsigned char translate_keycode(unsigned char keycode,
       return K_DEL;
     }
   }
-  /* substitutions for the all keyboards */
-  switch (keycode) {
-  case PAUSE:
+  /* in vi mode Pause acts as Caps Lock */
+  if ((READ_ONCE(kbd->status) & USB_KBD_STATUS_VI_MODE) && keycode == PAUSE)
     return K_CAPS;
-  }
+
   return usb_kbd_keycode[keycode];
 }
 
@@ -213,6 +212,7 @@ static void usb_kbd_irq(struct urb *urb) {
   struct usb_kbd *kbd = urb->context;
   int i;
   bool caps_pressed;
+  bool vi_on;
 
   switch (urb->status) {
   case 0: /* success */
@@ -226,6 +226,7 @@ static void usb_kbd_irq(struct urb *urb) {
     goto resubmit;
   }
 
+  vi_on = READ_ONCE(kbd->status) & USB_KBD_STATUS_VI_MODE;
   caps_pressed = memscan(kbd->new + 2, CAPS, 6) != kbd->new + 8;
   /* in diacritics mode the left Alt key acts as AltGr (right Alt) */
   if ((READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE) &&
@@ -244,7 +245,7 @@ static void usb_kbd_irq(struct urb *urb) {
   }
   /* report the modifier keys, shift, atl, ctrl */
   for (i = 0; i < 8; i++)
-    if (caps_pressed && !i) {
+    if (vi_on && caps_pressed && !i) {
       /* report Control_L pressed */
       input_report_key(kbd->dev, translate_keycode(Control_L, kbd), 1);
     } else {
@@ -262,7 +263,7 @@ static void usb_kbd_irq(struct urb *urb) {
       if (!translate_keycode(kbd->old[i], kbd)) {
         hid_info(urb->dev, "Unknown key (scancode %#x) released.\n",
                  kbd->old[i]);
-      } else if (old_code == CAPS) {
+      } else if (vi_on && old_code == CAPS) {
         if (kbd->caps_used_as_ctl) {
           kbd->caps_used_as_ctl = false;
         } else {
@@ -285,17 +286,29 @@ static void usb_kbd_irq(struct urb *urb) {
       if (!translate_keycode(kbd->new[i], kbd)) {
         hid_info(urb->dev, "Unknown key (scancode %#x) pressed.\n",
                  kbd->new[i]);
-      } else if (new_code == CAPS) {
-        /* CAPS is consumed, it only acts as Control_L */
+      } else if (vi_on && new_code == CAPS) {
+        /* CAPS is consumed; in vi mode it acts as Control_L or Escape */
       } else if (new_code == SCROLL_LOCK) {
-        /* Scroll Lock toggles diacritics mode, LED mirrors it */
-        bool on = !(READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE);
+        if (kbd->new[0] & MOD_RALT) {
+          /* AltGr+Scroll Lock toggles vi mode */
+          bool vi = !(READ_ONCE(kbd->status) & USB_KBD_STATUS_VI_MODE);
 
-        usb_kbd_status_set(kbd, USB_KBD_STATUS_DIACRITICS_MODE, on);
-        input_event(kbd->dev, EV_LED, LED_SCROLLL, on);
+          usb_kbd_status_set(kbd, USB_KBD_STATUS_VI_MODE, vi);
+          kbd->caps_used_as_ctl = false;
+          /* Caps may have been held as Caps Lock before the switch */
+          if (vi && caps_pressed)
+            input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
+        } else {
+          /* Scroll Lock toggles diacritics mode, LED mirrors it */
+          bool on = !(READ_ONCE(kbd->status) &
+                      USB_KBD_STATUS_DIACRITICS_MODE);
+
+          usb_kbd_status_set(kbd, USB_KBD_STATUS_DIACRITICS_MODE, on);
+          input_event(kbd->dev, EV_LED, LED_SCROLLL, on);
+        }
       } else {
         input_report_key(kbd->dev, translate_keycode(kbd->new[i], kbd), 1);
-        if (caps_pressed)
+        if (vi_on && caps_pressed)
           kbd->caps_used_as_ctl = true;
       }
     }
