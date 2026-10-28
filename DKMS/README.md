@@ -77,6 +77,36 @@ is reported as Left Ctrl, tapped alone it produces Escape, and an active
 Caps Lock is cancelled before the Escape. Pause is also mapped to Caps Lock
 in vi mode. When vi mode is off, Caps Lock and Pause behave normally.
 
+### Waiting for status changes
+The status attribute supports `poll(2)`: the driver notifies the sysfs file
+whenever the bitmap actually changes, so a process blocked in `poll()` is
+woken up. After each wakeup, seek back to the beginning of the file and read
+it again:
+
+```python
+import os
+import select
+
+fd = os.open("/sys/class/input/inputN/status", os.O_RDONLY)
+poller = select.poll()
+poller.register(fd, select.POLLPRI)
+
+while True:
+    poller.poll()                       # block until the status changes
+    os.lseek(fd, 0, os.SEEK_SET)
+    print(os.read(fd, 64).decode().strip())
+```
+
+The kernel also generates `FS_MODIFY` events for the file, so inotify works
+too:
+
+```bash
+inotifywait -m -e modify /sys/class/input/inputN/status
+```
+
+Notifications are coalesced: if several bits change before userspace reads,
+it wakes once and the read returns the latest bitmap.
+
 ### Vi mode at load time
 Vi mode can be enabled when the module loads, through a modprobe option. If
 no option is configured the driver defaults to `vi_mode=0` (off).

@@ -33,6 +33,7 @@
 #include <linux/slab.h>
 #include <linux/sysfs.h>
 #include <linux/usb/input.h>
+#include <linux/workqueue.h>
 
 /*
  * Version Information
@@ -161,22 +162,36 @@ struct usb_kbd {
   unsigned short idProduct;
 
   unsigned int status;
+  struct work_struct status_work;
 };
+
+static void usb_kbd_status_notify(struct work_struct *work) {
+  struct usb_kbd *kbd = container_of(work, struct usb_kbd, status_work);
+
+  sysfs_notify(&kbd->dev->dev.kobj, NULL, "status");
+}
 
 /*
  * Update the keyboard status bitmap. Must only be called from the interrupt
  * URB completion handler, which is the sole writer of @kbd->status.
+ * sysfs_notify() can sleep, so it is deferred to a work item; pollers of the
+ * "status" attribute are woken up whenever the value actually changes.
  */
 static inline void usb_kbd_status_set(struct usb_kbd *kbd, unsigned int mask,
                                       bool on) {
   unsigned int status = READ_ONCE(kbd->status);
+  unsigned int new_status;
 
   if (on)
-    status |= mask;
+    new_status = status | mask;
   else
-    status &= ~mask;
+    new_status = status & ~mask;
 
-  WRITE_ONCE(kbd->status, status);
+  if (new_status == status)
+    return;
+
+  WRITE_ONCE(kbd->status, new_status);
+  schedule_work(&kbd->status_work);
 }
 
 static ssize_t status_show(struct device *dev, struct device_attribute *attr,
@@ -463,6 +478,7 @@ static int usb_kbd_probe(struct usb_interface *iface,
   kbd->usbdev = dev;
   kbd->dev = input_dev;
   spin_lock_init(&kbd->leds_lock);
+  INIT_WORK(&kbd->status_work, usb_kbd_status_notify);
 
   /* seed the initial mode before the input device is registered */
   kbd->status = vi_mode ? USB_KBD_STATUS_VI_MODE : 0;
@@ -557,6 +573,7 @@ static void usb_kbd_disconnect(struct usb_interface *intf) {
   if (kbd) {
     device_remove_file(&kbd->dev->dev, &dev_attr_status);
     usb_kill_urb(kbd->irq);
+    cancel_work_sync(&kbd->status_work);
     input_unregister_device(kbd->dev);
     usb_kill_urb(kbd->led);
     usb_kbd_free_mem(interface_to_usbdev(intf), kbd);
