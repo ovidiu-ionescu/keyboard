@@ -315,8 +315,7 @@ static void usb_kbd_irq(struct urb *urb) {
             input_report_key(kbd->dev, translate_keycode(CAPS, kbd), 0);
         } else {
           /* Scroll Lock toggles diacritics mode, LED mirrors it */
-          bool on = !(READ_ONCE(kbd->status) &
-                      USB_KBD_STATUS_DIACRITICS_MODE);
+          bool on = !(READ_ONCE(kbd->status) & USB_KBD_STATUS_DIACRITICS_MODE);
 
           usb_kbd_status_set(kbd, USB_KBD_STATUS_DIACRITICS_MODE, on);
           input_event(kbd->dev, EV_LED, LED_SCROLLL, on);

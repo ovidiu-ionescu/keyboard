@@ -20,6 +20,7 @@ install: deps
   DEST_MODULE_LOCATION[0]=\"/extra\"\n\
   AUTOINSTALL=\"yes\"\n" > {{src_dir}}/dkms.conf'
   @echo "Registering with DKMS..."
+  #sudo dkms remove -m {{mod_name}} -v {{version}} --all || true
   sudo dkms add -m {{mod_name}} -v {{version}}
   sudo dkms build -m {{mod_name}} -v {{version}}
   sudo dkms install -m {{mod_name}} -v {{version}}
@@ -33,8 +34,8 @@ test:
   @echo "Press Ctrl+C to stop."
   sudo dmesg -w | grep -iE "usb|unicomp|{{mod_name}}"
 
-# Shortcut to quickly apply changes made to the C code
-reload:
+# Shortcut to quickly apply changes made to the C code into DKMS
+reinstall:
   -just remove
   just install
 
@@ -77,3 +78,7 @@ dev *args:
 # show the status file
 status:
   grep -H Unicomp /sys/class/input/input*/name | cut -d: -f1 | sed 's/name$/status/' | xargs cat
+
+# Format the source code with clang-format
+format:
+  clang-format -i usbpc121.c
